@@ -1,0 +1,11 @@
+- op: replace
+  path: /metadata/annotations/alb.ingress.kubernetes.io~1load-balancer-name
+  value: "arg-poc-alb"
+
+- op: replace
+  path: /metadata/annotations/alb.ingress.kubernetes.io~1tags
+  value: "BU=bu03,BE=dgp,Domain=inf,Perimeter=fac,Application=arg,ApplicationId=c0e6dadb-21e1-4662-abe3-7db2ce7ab952,CostCenter=fac,Environment=poc,Owner=fac,Description=Infrastructure - Factory - EKS,technical:terraform=false,DDoSAutomaticMitigationBlock=True"
+
+- op: replace
+  path: /spec/rules/0/host
+  value: argocd-poc.aws.cicd-monitoring.myengie.com

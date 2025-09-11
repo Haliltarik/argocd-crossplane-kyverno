@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server
+  namespace: argocd
+  annotations:
+    # Type de load balancer
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/load-balancer-name: 'LB-NAME-<ENV>'
+
+    # Mode HTTPS uniquement
+    alb.ingress.kubernetes.io/scheme: internal
+    #alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/success-codes: "200,301,302,307"
+    alb.ingress.kubernetes.io/backend-protocol: HTTPS
+
+    # Certificat ACM
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:407083967603:certificate/7581e5d8-e819-4167-b123-a52556d78ea1
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-FS-1-2-Res-2020-10
+
+    # Cible du trafic
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+
+    # Ajout de tags AWS
+    alb.ingress.kubernetes.io/tags: BU=bu03,BE=dgp,Domain=inf,Perimeter=fac,Application=arg,ApplicationId=c0e6dadb-21e1-4662-abe3-7db2ce7ab952,CostCenter=fac,Environment=<ENV>,Owner=fac,Description=Infrastructure - Factory - EKS,technical:terraform=false,DDoSAutomaticMitigationBlock=True
+
+spec:
+  ingressClassName: alb
+  rules:
+    - host: argocd-<ENV>.aws.cicd-monitoring.myengie.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 443

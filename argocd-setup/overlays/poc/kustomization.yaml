@@ -3,3 +3,13 @@ kind: Kustomization
 
 resources:
   - ../../base
+
+  
+patches:
+  - path: patch-ingress.yaml
+    target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: argocd-server
+      namespace: argocd
