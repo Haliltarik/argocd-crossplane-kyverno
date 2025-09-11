@@ -11,9 +11,6 @@ spec:
     targetRevision: 2.0.2
     helm:
       releaseName: crossplane
-      values: |
-        args:
-          - --enable-composition-functions
   destination:
     server: https://kubernetes.default.svc
     namespace: crossplane-system
