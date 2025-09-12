@@ -5,3 +5,5 @@ metadata:
 spec:
   credentials:
     source: InjectedIdentity
+  assumeRole:
+    roleARN: arn:aws:iam::407083967603:role/CrossplanePodIdentityRole
