@@ -23,7 +23,7 @@ spec:
               required:                # ✅ champs obligatoires
                 - bucketName
                 - location
-                - tags
+                #- tags
               properties:
                 bucketName:
                   type: string

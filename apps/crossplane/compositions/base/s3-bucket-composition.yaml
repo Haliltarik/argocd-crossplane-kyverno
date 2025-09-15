@@ -24,7 +24,7 @@ spec:
                   acl: private
                   versioningConfiguration:
                     status: Enabled
-                  tags: []
+                  #tags: []
                 providerConfigRef:
                   name: default
                 deletionPolicy: Delete
