@@ -31,8 +31,6 @@ spec:
             patches:
               - fromFieldPath: "spec.bucketName"
                 toFieldPath: "metadata.name"
-              - fromFieldPath: "spec.bucketName"
-                toFieldPath: "spec.forProvider.name"
               - fromFieldPath: "spec.location"
                 toFieldPath: "spec.forProvider.locationConstraint"
               - fromFieldPath: "spec.tags"
