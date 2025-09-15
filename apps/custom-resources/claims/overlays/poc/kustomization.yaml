@@ -2,16 +2,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../../base/s3-claim.yaml
+  - ../../base
 
 patches:
   - target:
       kind: BucketClaim
-      name: test-crossplane-bucket-poc-xrd-407083967603-tamt
+      name: bucket-claim-base
     patch: |-
       - op: replace
         path: /metadata/name
-        value: bucket-claim-poc
+        value: test-crossplane-bucket-poc-xrd-407083967603-tamt
       - op: replace
         path: /spec/bucketName
         value: poc-bucket-crossplane
@@ -20,5 +20,5 @@ patches:
         value:
           - key: Environment
             value: poc
-          - key: Owner
+          - key: fac
             value: crossplane
