@@ -1,0 +1,46 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xbuckets.s3.aws.engie.org
+spec:
+  group: s3.aws.engie.org
+  names:
+    kind: XBucket
+    plural: xbuckets
+  claimNames:
+    kind: BucketClaim
+    plural: bucketclaims
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:                # ✅ champs obligatoires
+                - bucketName
+                - location
+                - tags
+              properties:
+                bucketName:
+                  type: string
+                  description: "Nom unique du bucket"
+                location:
+                  type: string
+                  description: "Région AWS (ex: eu-west-1)"
+                tags:
+                  type: array
+                  description: "Tags clés/valeurs appliqués au bucket"
+                  items:
+                    type: object
+                    required:
+                      - key
+                      - value
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string

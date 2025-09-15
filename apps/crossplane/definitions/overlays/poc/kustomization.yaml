@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/s3-bucket-composition.yaml
+
+patches:
+  - target:
+      kind: Composition
+      name: s3bucket.aws.engie.org
+    patch: |-
+      - op: add
+        path: /spec/resources/0/base/spec/forProvider/tags
+        value:
+          - key: Environment
+            value: poc
+          - key: Owner
+            value: crossplane
+          - key: Project
+            value: demo
