@@ -1,10 +1,5 @@
-apiVersion: s3.aws.engie.org/v1alpha1
-kind: BucketClaim
-metadata:
-  name: bucket-claim-base
-spec:
-  bucketName: placeholder-bucket
-  location: eu-west-1
-  tags:
-    - key: Environment
-      value: base
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - s3-claim.yaml
