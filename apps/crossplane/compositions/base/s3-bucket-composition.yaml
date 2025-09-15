@@ -8,7 +8,7 @@ spec:
     kind: XBucket
   mode: Pipeline
   pipeline:
-    - step: bucket
+    - step: s3bucket
       functionRef:
         name: crossplane-contrib-function-patch-and-transform
       input:

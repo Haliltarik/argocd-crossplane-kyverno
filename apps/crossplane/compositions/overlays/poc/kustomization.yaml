@@ -9,8 +9,12 @@ patches:
       kind: Composition
       name: s3bucket-default
     patch: |-
-      - op: add
-        path: /spec/resources/0/base/spec/forProvider/tags/-
+      - op: replace
+        path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tags
         value:
-          key: Environment
-          value: poc
+          - key: Environment
+            value: poc
+          - key: Owner
+            value: fac
+          - key: Project
+            value: demo
