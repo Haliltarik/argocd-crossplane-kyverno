@@ -7,7 +7,7 @@ resources:
 patches:
   - target:
       kind: BucketClaim
-      name: bucket-claim-base
+      name: test-crossplane-bucket-poc-xrd-407083967603-tamt
     patch: |-
       - op: replace
         path: /metadata/name
