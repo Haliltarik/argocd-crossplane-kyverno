@@ -7,14 +7,10 @@ resources:
 patches:
   - target:
       kind: Composition
-      name: s3bucket.aws.engie.org
+      name: s3bucket-default
     patch: |-
       - op: add
-        path: /spec/resources/0/base/spec/forProvider/tags
+        path: /spec/resources/0/base/spec/forProvider/tags/-
         value:
-          - key: Environment
-            value: poc
-          - key: Owner
-            value: crossplane
-          - key: Project
-            value: demo
+          key: Environment
+          value: poc

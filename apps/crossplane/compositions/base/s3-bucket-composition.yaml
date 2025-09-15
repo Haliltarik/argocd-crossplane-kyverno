@@ -1,42 +1,31 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: s3bucket.aws.engie.org
+  name: s3bucket-default
 spec:
   compositeTypeRef:
     apiVersion: s3.aws.engie.org/v1alpha1
     kind: XBucket
-  mode: Pipeline
-  pipeline:
-    - step: patch-and-transform
-      functionRef:
-        name: crossplane-contrib-function-patch-and-transform
-      input:
-        apiVersion: pt.fn.crossplane.io/v1beta1
-        kind: Resources
-        resources:
-          - name: s3bucket
-            base:
-              apiVersion: s3.aws.crossplane.io/v1beta1
-              kind: Bucket
-              spec:
-                forProvider:
-                  acl: private
-                  versioningConfiguration:
-                    status: Enabled
-                  tags: []   # valeur par défaut
-                providerConfigRef:
-                  name: default
-                deletionPolicy: Delete
-            patches:
-              - fromFieldPath: "spec.bucketName"
-                toFieldPath: "metadata.name"
-              - fromFieldPath: "spec.bucketName"
-                toFieldPath: "spec.forProvider.name"
-              - fromFieldPath: "spec.location"
-                toFieldPath: "spec.forProvider.locationConstraint"
-              - fromFieldPath: "spec.tags"
-                toFieldPath: "spec.forProvider.tags"
-                policy:
-                  mergeOptions:
-                    appendSlice: true
+  resources:
+    - name: s3bucket
+      base:
+        apiVersion: s3.aws.crossplane.io/v1beta1
+        kind: Bucket
+        spec:
+          forProvider:
+            acl: private
+            versioningConfiguration:
+              status: Enabled
+            tags: []   # 👈 clé vide pour que les patches puissent s’appliquer
+          providerConfigRef:
+            name: default
+          deletionPolicy: Delete
+      patches:
+        - fromFieldPath: "spec.bucketName"
+          toFieldPath: "metadata.name"
+        - fromFieldPath: "spec.bucketName"
+          toFieldPath: "spec.forProvider.name"
+        - fromFieldPath: "spec.location"
+          toFieldPath: "spec.forProvider.locationConstraint"
+        - fromFieldPath: "spec.tags"
+          toFieldPath: "spec.forProvider.tags"
