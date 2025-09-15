@@ -6,26 +6,34 @@ spec:
   compositeTypeRef:
     apiVersion: s3.aws.engie.org/v1alpha1
     kind: XBucket
-  resources:
-    - name: s3bucket
-      base:
-        apiVersion: s3.aws.crossplane.io/v1beta1
-        kind: Bucket
-        spec:
-          forProvider:
-            acl: private
-            versioningConfiguration:
-              status: Enabled
-            tags: []   # 👈 clé vide pour que les patches puissent s’appliquer
-          providerConfigRef:
-            name: default
-          deletionPolicy: Delete
-      patches:
-        - fromFieldPath: "spec.bucketName"
-          toFieldPath: "metadata.name"
-        - fromFieldPath: "spec.bucketName"
-          toFieldPath: "spec.forProvider.name"
-        - fromFieldPath: "spec.location"
-          toFieldPath: "spec.forProvider.locationConstraint"
-        - fromFieldPath: "spec.tags"
-          toFieldPath: "spec.forProvider.tags"
+  mode: Pipeline
+  pipeline:
+    - step: bucket
+      functionRef:
+        name: crossplane-contrib-function-patch-and-transform
+      input:
+        apiVersion: v1
+        kind: PatchSet
+        resources:
+          - name: s3bucket
+            base:
+              apiVersion: s3.aws.crossplane.io/v1beta1
+              kind: Bucket
+              spec:
+                forProvider:
+                  acl: private
+                  versioningConfiguration:
+                    status: Enabled
+                  tags: []
+                providerConfigRef:
+                  name: default
+                deletionPolicy: Delete
+            patches:
+              - fromFieldPath: "spec.bucketName"
+                toFieldPath: "metadata.name"
+              - fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.name"
+              - fromFieldPath: "spec.location"
+                toFieldPath: "spec.forProvider.locationConstraint"
+              - fromFieldPath: "spec.tags"
+                toFieldPath: "spec.forProvider.tags"
