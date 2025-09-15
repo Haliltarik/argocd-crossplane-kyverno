@@ -33,5 +33,5 @@ spec:
                 toFieldPath: "metadata.name"
               - fromFieldPath: "spec.location"
                 toFieldPath: "spec.forProvider.locationConstraint"
-              - fromFieldPath: "spec.tags"
-                toFieldPath: "spec.forProvider.tags"
+              # - fromFieldPath: "spec.tags"
+              #   toFieldPath: "spec.forProvider.tags"
