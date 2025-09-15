@@ -14,7 +14,7 @@ patches:
         value: test-crossplane-bucket-poc-xrd-407083967603-tamt
       - op: replace
         path: /spec/bucketName
-        value: poc-bucket-crossplane
+        value: test-crossplane-bucket-poc-xrd-407083967603-tamt
       - op: replace
         path: /spec/tags
         value:
