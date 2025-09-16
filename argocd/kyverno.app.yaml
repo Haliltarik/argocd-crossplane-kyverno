@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/kyverno/kyverno
     targetRevision: v1.15.1
-    path: config/release   # ou la location précise dans le repo s'il ne s'agit pas d'un Helm chart
+    path: release/download   # ou la location précise dans le repo s'il ne s'agit pas d'un Helm chart
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
