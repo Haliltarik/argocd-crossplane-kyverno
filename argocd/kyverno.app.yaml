@@ -1,21 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kyverno
+  name: kyverno-install
   namespace: argocd
 spec:
   project: default
   source:
-    chart: kyverno
-    repoURL: https://kyverno.github.io/kyverno/
-    targetRevision: 3.5.1  # Utilisez la dernière version stable
-    helm:
-      releaseName: kyverno
-      values: |
-        replicaCount: 1
-        installCRDs: true
+    repoURL: https://github.com/kyverno/kyverno
+    targetRevision: v1.15.1
+    path: config/release   # ou la location précise dans le repo s'il ne s'agit pas d'un Helm chart
   destination:
-    server: "https://kubernetes.default.svc"
+    server: https://kubernetes.default.svc
     namespace: kyverno
   syncPolicy:
     automated:
@@ -23,5 +18,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      # - PrunePropagationPolicy=foreground
-      # - PruneLast=true
