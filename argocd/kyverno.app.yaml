@@ -12,6 +12,7 @@ spec:
     helm:
       releaseName: kyverno
       values: |
+        installCRDs: true
         replicaCount: 2
         admissionController:
           replicaCount: 2
