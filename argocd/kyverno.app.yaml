@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kyverno/kyverno
-    targetRevision: refs/tags/v3.5.1
+    targetRevision: refs/tags/v1.15.1
     path: config/crds
   destination:
     server: https://kubernetes.default.svc
