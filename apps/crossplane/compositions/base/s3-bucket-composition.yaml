@@ -24,7 +24,8 @@ spec:
                   acl: private
                   versioningConfiguration:
                     status: Enabled
-                  #tags: []
+                  tagging:
+                    tagsSet: []
                 providerConfigRef:
                   name: default
                 deletionPolicy: Delete
@@ -34,4 +35,4 @@ spec:
               - fromFieldPath: "spec.location"
                 toFieldPath: "spec.forProvider.locationConstraint"
               - fromFieldPath: "spec.tags"
-                toFieldPath: "spec.forProvider.tags"
+                toFieldPath: "spec.forProvider.tagging.tagSet"

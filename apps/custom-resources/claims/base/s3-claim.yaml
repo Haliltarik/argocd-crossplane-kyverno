@@ -5,6 +5,6 @@ metadata:
 spec:
   bucketName: placeholder-bucket
   location: eu-west-1
-  # tags:
-  #   - key: Environment
-  #     value: base
+  tags:
+    - key: Environment
+      value: base
