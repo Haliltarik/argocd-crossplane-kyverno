@@ -33,4 +33,3 @@ spec:
       - CreateNamespace=true
       - Replace=true
       - ServerSideApply=true
-      - Force=true 
