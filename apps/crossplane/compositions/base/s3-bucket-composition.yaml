@@ -25,7 +25,7 @@ spec:
                   versioningConfiguration:
                     status: Enabled
                   tagging:
-                    tagsSet: []
+                    tagSet: []
                 providerConfigRef:
                   name: default
                 deletionPolicy: Delete
