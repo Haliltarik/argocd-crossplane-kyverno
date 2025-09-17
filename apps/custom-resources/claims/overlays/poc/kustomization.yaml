@@ -19,6 +19,6 @@ patches:
         path: /spec/tags
         value:
           - key: Environment
-            value: poc
+            value: poc-from-poc
           - key: Owner
-            value: fac
+            value: fac-from-poc
