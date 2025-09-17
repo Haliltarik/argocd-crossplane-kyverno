@@ -8,6 +8,12 @@ patches:
   - target:
       kind: Composition
       name: s3bucket-default
+    patch: |-
+      - op: replace
+        path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tagging/tagSet
+        value: []
+
+
     # patch: |-
     #   - op: add
     #     path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tagging/tagSet
