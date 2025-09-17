@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: BucketClaim
+      name: bucket-claim-base
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: test-crossplane-bucket-proc-xrd-407083967603-tamt
+      - op: replace
+        path: /spec/bucketName
+        value: test-crossplane-bucket-prod-xrd-407083967603-tamt
+      - op: add
+        path: /spec/tags
+        value:
+          - key: Environment
+            value: prod
+          - key: fac
+            value: crossplane

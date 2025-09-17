@@ -4,17 +4,17 @@ kind: Kustomization
 resources:
   - ../../base
 
-# patches:
-#   - target:
-#       kind: Composition
-#       name: s3bucket-default
-#     patch: |-
-#       - op: replace
-#         path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tags
-#         value:
-#           - key: Environment
-#             value: poc
-#           - key: Owner
-#             value: fac
-#           - key: Project
-#             value: demo
+patches:
+  - target:
+      kind: Composition
+      name: s3bucket-default
+    patch: |-
+      - op: add
+        path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tags
+        value:
+          - key: Environment
+            value: poc
+          - key: Owner
+            value: fac
+          - key: Project
+            value: demo
