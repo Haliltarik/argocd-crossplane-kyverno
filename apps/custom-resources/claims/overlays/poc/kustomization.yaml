@@ -8,17 +8,17 @@ patches:
   - target:
       kind: BucketClaim
       name: bucket-claim-base
-    patch: |-
-      - op: replace
-        path: /metadata/name
-        value: test-crossplane-bucket-poc-xrd-407083967603-tamt
-      - op: replace
-        path: /spec/bucketName
-        value: test-crossplane-bucket-poc-xrd-407083967603-tamt
-      - op: replace
-        path: /spec/tags
-        value:
-          - key: Environment
-            value: poc
-          - key: Owner
-            value: fac
+    # patch: |-
+    #   - op: replace
+    #     path: /metadata/name
+    #     value: test-crossplane-bucket-poc-xrd-407083967603-tamt
+    #   - op: replace
+    #     path: /spec/bucketName
+    #     value: test-crossplane-bucket-poc-xrd-407083967603-tamt
+    #   - op: replace
+    #     path: /spec/tags
+    #     value:
+    #       - key: Environment
+    #         value: poc
+    #       - key: Owner
+    #         value: fac

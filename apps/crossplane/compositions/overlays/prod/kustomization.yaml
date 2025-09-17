@@ -8,13 +8,13 @@ patches:
   - target:
       kind: Composition
       name: s3bucket-default
-    patch: |-
-      - op: add
-        path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tagging/tagSet
-        value:
-          - key: Environment
-            value: prod
-          - key: Owner
-            value: fac
-          - key: Project
-            value: demo
+    # patch: |-
+    #   - op: add
+    #     path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tagging/tagSet
+    #     value:
+    #       - key: Environment
+    #         value: prod
+    #       - key: Owner
+    #         value: fac
+    #       - key: Project
+    #         value: demo
