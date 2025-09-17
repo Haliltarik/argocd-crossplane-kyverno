@@ -33,3 +33,10 @@ spec:
       - CreateNamespace=true
       - Replace=true
       - ServerSideApply=true
+  ignoreDifferences:
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: kyverno:migrate-resources
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+      name: kyverno:migrate-resources
