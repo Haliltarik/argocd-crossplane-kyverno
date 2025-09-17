@@ -15,10 +15,3 @@ patches:
       - op: replace
         path: /spec/bucketName
         value: test-crossplane-bucket-prod-xrd-407083967603-tamt
-      # - op: add
-      #   path: /spec/tags
-      #   value:
-      #     - key: Environment
-      #       value: prod
-      #     - key: fac
-      #       value: crossplane
