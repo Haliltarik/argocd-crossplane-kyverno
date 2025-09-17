@@ -1,7 +1,7 @@
 apiVersion: s3.aws.crossplane.io/v1beta1
 kind: Bucket
 metadata:
-  name: test-crossplane-bucket-poc-407083967603-tamt
+  name: test-crossplane-bucket-simple-407083967603-tamt
 spec:
   forProvider:
     locationConstraint: eu-west-1
