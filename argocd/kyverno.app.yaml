@@ -33,4 +33,4 @@ spec:
       - CreateNamespace=true
       - Replace=true
       - ServerSideApply=true
-      - SkipHooks=true
+      - Force=true 
