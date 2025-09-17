@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+# Ici tu pourrais ajouter des patches si tu veux adapter
+# la policy différemment selon l’environnement (ex: dev/audit, prod/enforce)
