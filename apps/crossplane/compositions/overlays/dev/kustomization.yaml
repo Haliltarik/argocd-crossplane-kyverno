@@ -13,7 +13,7 @@ patches:
         path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tagging/tagSet
         value:
           - key: Environment
-            value: poc
+            value: dev
           - key: Owner
             value: fac
           - key: Project

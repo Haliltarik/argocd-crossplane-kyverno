@@ -21,4 +21,6 @@ patches:
           - key: Environment
             value: dev
           - key: Owner
-            value: crossplane
+            value: fac
+          - key: Application
+            value: Crossplane
