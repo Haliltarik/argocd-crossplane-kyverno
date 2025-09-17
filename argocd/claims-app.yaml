@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/Haliltarik/argocd-crossplane-kyverno.git
     targetRevision: main
-    path: apps/custom-resources/claims/overlays/poc
+    path: apps/custom-resources/claims/overlays
   destination:
     server: https://kubernetes.default.svc
     namespace: crossplane-system
