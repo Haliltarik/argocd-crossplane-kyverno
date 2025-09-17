@@ -19,6 +19,7 @@ spec:
         pattern:
           spec:
             forProvider:
-              tags:
-                - key: "?*"
-                  value: "?*"
+              tagging:
+                tagSet:
+                  - key: "?*"
+                    value: "?*"
