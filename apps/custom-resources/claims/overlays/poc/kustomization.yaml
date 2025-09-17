@@ -20,5 +20,5 @@ patches:
         value:
           - key: Environment
             value: poc
-          - key: fac
-            value: crossplane
+          - key: Owner
+            value: fac
