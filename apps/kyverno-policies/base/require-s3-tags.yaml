@@ -18,7 +18,7 @@ spec:
       validate:
         message: "Tous les S3 Buckets doivent avoir au moins un tag défini."
         #allowExistingViolations: true
-        pattern:
+        anyPattern:
           spec:
             forProvider:
               tagging:
