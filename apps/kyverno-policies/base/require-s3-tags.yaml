@@ -13,8 +13,8 @@ spec:
           - resources:
               kinds:
                 - Bucket
-              apiGroups:
-                - s3.aws.crossplane.io
+              # apiGroups:
+              #   - s3.aws.crossplane.io
       validate:
         message: "Tous les S3 Buckets doivent avoir au moins un tag défini."
         allowExistingViolations: true
