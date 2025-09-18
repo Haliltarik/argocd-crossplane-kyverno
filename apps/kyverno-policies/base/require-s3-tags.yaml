@@ -12,7 +12,7 @@ spec:
         any:
           - resources:
               kinds:
-                - Bucket
+                - Buckets
               apiGroups:
                 - s3.aws.crossplane.io
       validate:
