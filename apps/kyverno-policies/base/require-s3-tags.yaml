@@ -18,10 +18,16 @@ spec:
       validate:
         message: "Tous les S3 Buckets doivent avoir au moins un tag défini."
         #allowExistingViolations: true
-        anyPattern:
+        Pattern:
           spec:
             forProvider:
               tagging:
                 tagSet:
                   - key: "?*"
                     value: "?*"
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.forProvider.tagging.tagSet | length(@) }}"
+                operator: Equals
+                value: 0
