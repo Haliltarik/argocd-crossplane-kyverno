@@ -7,7 +7,6 @@ spec:
   background: true
   rules:
     - name: check-s3-tags
-      #skipBackgroundRequests: true
       match:
         any:
           - resources:
@@ -17,7 +16,6 @@ spec:
                 - s3.aws.crossplane.io
       validate:
         message: "All S3 Buckets must have at least one tag defined."
-        #allowExistingViolations: true
         Pattern:
           spec:
             forProvider:
