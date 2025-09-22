@@ -49,11 +49,11 @@ spec:
           conditions:
             any:
               # Vérifie que la policy contient aws:SecureTransport
-              - key: "{{ contains(request.object.spec.forProvider.policy, 'aws:SecureTransport') }}"
+              - key: "{{ contains(to_string(request.object.spec.forProvider.policy), 'aws:SecureTransport') }}"
                 operator: Equals
                 value: false
               # Vérifie que la policy contient un Effect: Deny pour les connexions non SSL
-              - key: "{{ contains(request.object.spec.forProvider.policy, 'Effect') && contains(request.object.spec.forProvider.policy, 'Deny') }}"
+              - key: "{{ contains(to_string(request.object.spec.forProvider.policy), 'Effect') && contains(to_string(request.object.spec.forProvider.policy), 'Deny') }}"
                 operator: Equals
                 value: false
 
