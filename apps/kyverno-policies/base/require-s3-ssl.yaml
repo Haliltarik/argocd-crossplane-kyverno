@@ -147,42 +147,29 @@ spec:
         patchStrategicMerge:
           spec:
             forProvider:
-              policy: |
-                {
-                  "Version": "2012-10-17",
-                  "Statement": [
-                    {
-                      "Sid": "DenyInsecureConnections",
-                      "Effect": "Deny",
-                      "Principal": "*",
-                      "Action": "s3:*",
-                      "Resource": [
-                        "arn:aws:s3:::{{ request.object.metadata.name }}/*",
-                        "arn:aws:s3:::{{ request.object.metadata.name }}"
-                      ],
-                      "Condition": {
-                        "Bool": {
-                          "aws:SecureTransport": "false"
-                        }
-                      }
-                    },
-                    {
-                      "Sid": "DenyOldTLSVersions",
-                      "Effect": "Deny",
-                      "Principal": "*",
-                      "Action": "s3:*",
-                      "Resource": [
-                        "arn:aws:s3:::{{ request.object.metadata.name }}/*",
-                        "arn:aws:s3:::{{ request.object.metadata.name }}"
-                      ],
-                      "Condition": {
-                        "NumericLessThan": {
-                          "s3:TlsVersion": "1.2"
-                        }
-                      }
-                    }
-                  ]
-                }
+              policy:
+                Version: "2012-10-17"
+                Statement:
+                  - Sid: "DenyInsecureConnections"
+                    Effect: "Deny"
+                    Principal: "*"
+                    Action: "s3:*"
+                    Resource:
+                      - "arn:aws:s3:::{{ request.object.metadata.name }}/*"
+                      - "arn:aws:s3:::{{ request.object.metadata.name }}"
+                    Condition:
+                      Bool:
+                        "aws:SecureTransport": "false"
+                  - Sid: "DenyOldTLSVersions"
+                    Effect: "Deny"
+                    Principal: "*"
+                    Action: "s3:*"
+                    Resource:
+                      - "arn:aws:s3:::{{ request.object.metadata.name }}/*"
+                      - "arn:aws:s3:::{{ request.object.metadata.name }}"
+                    Condition:
+                      NumericLessThan:
+                        "s3:TlsVersion": "1.2"
 
 ---
 # Policy pour les Claims (XR) S3
