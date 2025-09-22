@@ -1,0 +1,231 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-s3-ssl
+  annotations:
+    policies.kyverno.io/title: Require SSL/TLS for S3 Buckets
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Bucket
+    policies.kyverno.io/description: >-
+      Cette policy force l'utilisation de SSL/TLS pour tous les buckets S3 créés via Crossplane.
+      Elle vérifie la présence d'une bucket policy qui refuse les connexions HTTP non sécurisées
+      en utilisant la condition aws:SecureTransport.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+    - name: require-ssl-bucket-policy
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      validate:
+        message: "Les buckets S3 doivent avoir une policy qui force l'utilisation de SSL/TLS (aws:SecureTransport)"
+        pattern:
+          spec:
+            forProvider:
+              policy: "?*"
+        
+    - name: validate-ssl-policy-content
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.forProvider.policy }}"
+            operator: NotEquals
+            value: ""
+      validate:
+        message: "La bucket policy doit contenir une condition aws:SecureTransport pour forcer HTTPS"
+        deny:
+          conditions:
+            any:
+              # Vérifie que la policy contient aws:SecureTransport
+              - key: "{{ contains(request.object.spec.forProvider.policy, 'aws:SecureTransport') }}"
+                operator: Equals
+                value: false
+              # Vérifie que la policy contient un Effect: Deny pour les connexions non SSL
+              - key: "{{ contains(request.object.spec.forProvider.policy, 'Effect') && contains(request.object.spec.forProvider.policy, 'Deny') }}"
+                operator: Equals
+                value: false
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-s3-encryption-in-transit
+  annotations:
+    policies.kyverno.io/title: Require S3 Encryption in Transit
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Bucket
+    policies.kyverno.io/description: >-
+      Policy complémentaire qui s'assure que les buckets S3 sont configurés
+      pour forcer le chiffrement en transit avec TLS 1.2 minimum.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+    - name: require-server-side-encryption-configuration
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      validate:
+        message: "Les buckets S3 doivent avoir une configuration de chiffrement côté serveur"
+        pattern:
+          spec:
+            forProvider:
+              =(serverSideEncryptionConfiguration): 
+                - rules:
+                    - applyServerSideEncryptionByDefault:
+                        sseAlgorithm: "?*"
+
+    - name: require-public-access-block
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      validate:
+        message: "Les buckets S3 doivent bloquer l'accès public pour la sécurité"
+        pattern:
+          spec:
+            forProvider:
+              =(publicAccessBlockConfiguration):
+                blockPublicAcls: true
+                blockPublicPolicy: true
+                ignorePublicAcls: true
+                restrictPublicBuckets: true
+
+---
+# Policy pour générer automatiquement une bucket policy SSL si elle n'existe pas
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-s3-ssl-policy
+  annotations:
+    policies.kyverno.io/title: Generate SSL Bucket Policy for S3
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Bucket
+    policies.kyverno.io/description: >-
+      Cette policy génère automatiquement une bucket policy SSL/TLS
+      si aucune policy n'est définie sur le bucket S3.
+spec:
+  validationFailureAction: audit  # Mode audit car on génère du contenu
+  background: true
+  rules:
+    - name: add-ssl-policy-if-missing
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      preconditions:
+        all:
+          # Seulement si aucune policy n'existe
+          - key: "{{ request.object.spec.forProvider.policy || '' }}"
+            operator: Equals
+            value: ""
+      mutate:
+        patchStrategicMerge:
+          spec:
+            forProvider:
+              policy: |
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Sid": "DenyInsecureConnections",
+                      "Effect": "Deny",
+                      "Principal": "*",
+                      "Action": "s3:*",
+                      "Resource": [
+                        "arn:aws:s3:::{{ request.object.metadata.name }}/*",
+                        "arn:aws:s3:::{{ request.object.metadata.name }}"
+                      ],
+                      "Condition": {
+                        "Bool": {
+                          "aws:SecureTransport": "false"
+                        }
+                      }
+                    },
+                    {
+                      "Sid": "DenyOldTLSVersions",
+                      "Effect": "Deny",
+                      "Principal": "*",
+                      "Action": "s3:*",
+                      "Resource": [
+                        "arn:aws:s3:::{{ request.object.metadata.name }}/*",
+                        "arn:aws:s3:::{{ request.object.metadata.name }}"
+                      ],
+                      "Condition": {
+                        "NumericLessThan": {
+                          "s3:TlsVersion": "1.2"
+                        }
+                      }
+                    }
+                  ]
+                }
+
+---
+# Policy pour les Claims (XR) S3
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-s3-claim-ssl
+  annotations:
+    policies.kyverno.io/title: Require SSL for S3 Claims
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: XObjectStorage
+    policies.kyverno.io/description: >-
+      Policy pour s'assurer que les Claims S3 (Composite Resources)
+      incluent les exigences SSL/TLS.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+    - name: require-ssl-in-claims
+      match:
+        any:
+          - resources:
+              kinds:
+                - XObjectStorage
+              apiGroups:
+                - aws.platform.upbound.io
+      validate:
+        message: "Les Claims S3 doivent spécifier requireSSL: true"
+        pattern:
+          spec:
+            =(requireSSL): true
+            
+    - name: require-encryption-in-claims
+      match:
+        any:
+          - resources:
+              kinds:
+                - XObjectStorage
+              apiGroups:
+                - aws.platform.upbound.io  
+      validate:
+        message: "Les Claims S3 doivent spécifier encryption: true"
+        pattern:
+          spec:
+            =(encryption): true
