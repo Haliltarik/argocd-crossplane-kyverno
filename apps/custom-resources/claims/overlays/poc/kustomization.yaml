@@ -9,12 +9,14 @@ patches:
       kind: BucketClaim
       name: bucket-claim-base
     patch: |-
+      # donner un nom au bucket
       - op: replace
         path: /metadata/name
         value: test-crossplane-bucket-poc-xrd-407083967603-tamt
       - op: replace
         path: /spec/bucketName
         value: test-crossplane-bucket-poc-xrd-407083967603-tamt
+      # Mettre des tags
       - op: replace
         path: /spec/tags
         value:
@@ -22,3 +24,10 @@ patches:
             value: poc
           - key: Owner
             value: fac
+      # Activer le SSL et le chiffrement
+      - op: add
+        path: /spec/requireSSL
+        value: true
+      - op: add
+        path: /spec/encryption
+        value: true
