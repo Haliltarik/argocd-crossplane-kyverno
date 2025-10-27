@@ -20,7 +20,7 @@ spec:
           properties:
             spec:
               type: object
-              required:                # ✅ champs obligatoires
+              required:                
                 - bucketName
                 - location
                 #- tags
@@ -44,3 +44,9 @@ spec:
                         type: string
                       value:
                         type: string
+                requireSSL:                   
+                  type: boolean
+                  description: "Forcer l'utilisation de connexions HTTPS"
+                encryption:                   
+                  type: boolean
+                  description: "Activer le chiffrement côté serveur (SSE)"
