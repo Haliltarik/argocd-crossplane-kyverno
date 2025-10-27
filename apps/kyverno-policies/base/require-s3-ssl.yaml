@@ -178,13 +178,13 @@ kind: ClusterPolicy
 metadata:
   name: require-s3-claim-ssl
   annotations:
-    policies.kyverno.io/title: Require SSL for S3 Claims
+    policies.kyverno.io/title: Require SSL for S3 Bucket Claims
     policies.kyverno.io/category: Security
     policies.kyverno.io/severity: high
-    policies.kyverno.io/subject: XObjectStorage
+    policies.kyverno.io/subject: BucketClaim
     policies.kyverno.io/description: >-
-      Policy pour s'assurer que les Claims S3 (Composite Resources)
-      incluent les exigences SSL/TLS.
+      Vérifie que les BucketClaims Engie (s3.aws.engie.org) et leurs XBuckets
+      exigent requireSSL et encryption activés.
 spec:
   validationFailureAction: enforce
   background: true
@@ -194,25 +194,41 @@ spec:
         any:
           - resources:
               kinds:
-                - XObjectStorage
+                - BucketClaim
               apiGroups:
-                - aws.platform.upbound.io
+                - s3.aws.engie.org
       validate:
-        message: "Les Claims S3 doivent spécifier requireSSL: true"
+        message: "Les BucketClaims doivent spécifier requireSSL: true"
         pattern:
           spec:
             =(requireSSL): true
-            
+
     - name: require-encryption-in-claims
       match:
         any:
           - resources:
               kinds:
-                - XObjectStorage
+                - BucketClaim
               apiGroups:
-                - aws.platform.upbound.io  
+                - s3.aws.engie.org
       validate:
-        message: "Les Claims S3 doivent spécifier encryption: true"
+        message: "Les BucketClaims doivent spécifier encryption: true"
         pattern:
           spec:
             =(encryption): true
+
+    - name: require-ssl-in-xbuckets
+      match:
+        any:
+          - resources:
+              kinds:
+                - XBucket
+              apiGroups:
+                - s3.aws.engie.org
+      validate:
+        message: "Les XBuckets doivent spécifier requireSSL: true et encryption: true"
+        pattern:
+          spec:
+            forProvider:
+              =(requireSSL): true
+              =(encryption): true
