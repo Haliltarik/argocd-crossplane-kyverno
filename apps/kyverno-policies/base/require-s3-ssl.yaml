@@ -12,7 +12,7 @@ metadata:
       Elle vérifie la présence d'une bucket policy qui refuse les connexions HTTP non sécurisées
       en utilisant la condition aws:SecureTransport.
 spec:
-  validationFailureAction: enforce
+  validationFailureAction: audit
   background: true
   rules:
     - name: require-ssl-bucket-policy
