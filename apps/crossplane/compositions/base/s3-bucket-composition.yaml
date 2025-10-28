@@ -54,40 +54,40 @@ spec:
               - fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
 
-              # ✅ Bucket policy HTTPS-only + TLS >= 1.2
-              - type: CombineFromComposite
-                toFieldPath: "spec.forProvider.policy"
-                combine:
-                  variables:
-                    - fromFieldPath: "metadata.name"
-                    - fromFieldPath: "metadata.name"
-                  strategy: string
-                  string:
-                    fmt: |
-                      {
-                        "Version":"2012-10-17",
-                        "Statement":[
-                          {
-                            "Sid":"DenyNonSSLRequests",
-                            "Effect":"Deny",
-                            "Principal":"*",
-                            "Action":"s3:*",
-                            "Resource":[
-                              "arn:aws:s3:::%s",
-                              "arn:aws:s3:::%s/*"
-                            ],
-                            "Condition":{"Bool":{"aws:SecureTransport":"false"}}
-                          },
-                          {
-                            "Sid":"DenyOldTLSVersions",
-                            "Effect":"Deny",
-                            "Principal":"*",
-                            "Action":"s3:*",
-                            "Resource":[
-                              "arn:aws:s3:::%s",
-                              "arn:aws:s3:::%s/*"
-                            ],
-                            "Condition":{"NumericLessThan":{"s3:TlsVersion":"1.2"}}
-                          }
-                        ]
-                      }
+              # # ✅ Bucket policy HTTPS-only + TLS >= 1.2
+              # - type: CombineFromComposite
+              #   toFieldPath: "spec.forProvider.policy"
+              #   combine:
+              #     variables:
+              #       - fromFieldPath: "metadata.name"
+              #       - fromFieldPath: "metadata.name"
+              #     strategy: string
+              #     string:
+              #       fmt: |
+              #         {
+              #           "Version":"2012-10-17",
+              #           "Statement":[
+              #             {
+              #               "Sid":"DenyNonSSLRequests",
+              #               "Effect":"Deny",
+              #               "Principal":"*",
+              #               "Action":"s3:*",
+              #               "Resource":[
+              #                 "arn:aws:s3:::%s",
+              #                 "arn:aws:s3:::%s/*"
+              #               ],
+              #               "Condition":{"Bool":{"aws:SecureTransport":"false"}}
+              #             },
+              #             {
+              #               "Sid":"DenyOldTLSVersions",
+              #               "Effect":"Deny",
+              #               "Principal":"*",
+              #               "Action":"s3:*",
+              #               "Resource":[
+              #                 "arn:aws:s3:::%s",
+              #                 "arn:aws:s3:::%s/*"
+              #               ],
+              #               "Condition":{"NumericLessThan":{"s3:TlsVersion":"1.2"}}
+              #             }
+              #           ]
+              #         }
