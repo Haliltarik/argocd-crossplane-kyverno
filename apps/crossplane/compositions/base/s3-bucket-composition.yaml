@@ -36,6 +36,83 @@ spec:
                 toFieldPath: "spec.forProvider.locationConstraint"
               - fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
+              # ---- Block Public Access (toujours ON)
+              - toFieldPath: "spec.forProvider.publicAccessBlockConfiguration.blockPublicAcls"
+                type: FromCompositeFieldPath
+                policy:
+                  fromFieldPath: Optional
+                transforms:
+                  - type: string
+                    map: { "": "true" }
+                fromFieldPath: "spec.blockPublicAccess"   # champ optionnel dans XBucket, ignoré ici
+              - toFieldPath: "spec.forProvider.publicAccessBlockConfiguration.blockPublicPolicy"
+                type: FromCompositeFieldPath
+                policy: { fromFieldPath: Optional }
+                transforms: [ { type: string, map: { "": "true" } } ]
+                fromFieldPath: "spec.blockPublicAccess"
+              - toFieldPath: "spec.forProvider.publicAccessBlockConfiguration.ignorePublicAcls"
+                type: FromCompositeFieldPath
+                policy: { fromFieldPath: Optional }
+                transforms: [ { type: string, map: { "": "true" } } ]
+                fromFieldPath: "spec.blockPublicAccess"
+              - toFieldPath: "spec.forProvider.publicAccessBlockConfiguration.restrictPublicBuckets"
+                type: FromCompositeFieldPath
+                policy: { fromFieldPath: Optional }
+                transforms: [ { type: string, map: { "": "true" } } ]
+                fromFieldPath: "spec.blockPublicAccess"
+
+              # ---- Server-Side Encryption (default ON, aws:kms - clé gérée AWS)
+              # Si spec.encryption est absent -> on met quand-même aws:kms
+              - fromFieldPath: "spec.encryption"
+                policy: { fromFieldPath: Optional }
+                toFieldPath: "spec.forProvider.serverSideEncryptionConfiguration[0].rules[0].applyServerSideEncryptionByDefault.sseAlgorithm"
+                transforms:
+                  - type: map
+                    map:
+                      "true": "aws:kms"
+                      "false": ""          # si explicitement false, on n'applique pas
+                      "": "aws:kms"        # défaut -> ON
+
+              # ---- Bucket policy HTTPS-only + TLS >= 1.2 (default ON)
+              # Construit la policy JSON en injectant le nom du bucket
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: "metadata.name"
+                    - fromFieldPath: "spec.requireSSL"
+                      policy: { fromFieldPath: Optional }
+                  strategy: string
+                  string:
+                    fmt: |
+                      ${2:true}?{
+                        "Version":"2012-10-17",
+                        "Statement":[
+                          {
+                            "Sid":"DenyNonSSLRequests",
+                            "Effect":"Deny",
+                            "Principal":"*",
+                            "Action":"s3:*",
+                            "Resource":[
+                              "arn:aws:s3:::%s",
+                              "arn:aws:s3:::%s/*"
+                            ],
+                            "Condition":{"Bool":{"aws:SecureTransport":"false"}}
+                          },
+                          {
+                            "Sid":"DenyOldTLSVersions",
+                            "Effect":"Deny",
+                            "Principal":"*",
+                            "Action":"s3:*",
+                            "Resource":[
+                              "arn:aws:s3:::%s",
+                              "arn:aws:s3:::%s/*"
+                            ],
+                            "Condition":{"NumericLessThan":{"s3:TlsVersion":"1.2"}}
+                          }
+                        ]
+                      }:""
+                toFieldPath: "spec.forProvider.policy"
+              
               # - fromFieldPath: "spec.requireSSL"
               #   toFieldPath: "spec.requireSSL"
               # - fromFieldPath: "spec.encryption"

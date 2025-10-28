@@ -46,7 +46,7 @@ spec:
                         type: string
                 requireSSL:                   
                   type: boolean
-                  description: "Forcer l'utilisation de connexions HTTPS"
+                  description: "Forcer HTTPS/TLS >= 1.2"
                 encryption:                   
                   type: boolean
-                  description: "Activer le chiffrement côté serveur (SSE)"
+                  description: "Activer SSE (aws:kms - clé AWS gérée)"
