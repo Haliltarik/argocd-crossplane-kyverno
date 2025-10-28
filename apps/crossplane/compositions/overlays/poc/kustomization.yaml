@@ -18,9 +18,9 @@ patches:
             value: fac
           - key: Project
             value: demo
-      - op: add
-        path: /spec/pipeline/0/input/resources/0/base/spec/requireSSL
-        value: true
-      - op: add
-        path: /spec/pipeline/0/input/resources/0/base/spec/encryption
-        value: true
+      # - op: add
+      #   path: /spec/pipeline/0/input/resources/0/base/spec/requireSSL
+      #   value: true
+      # - op: add
+      #   path: /spec/pipeline/0/input/resources/0/base/spec/encryption
+      #   value: true
