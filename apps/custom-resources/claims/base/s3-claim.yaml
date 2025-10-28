@@ -5,8 +5,8 @@ metadata:
 spec:
   bucketName: placeholder-bucket
   location: eu-west-1
-  # requireSSL: true
-  # encryption: true
+  requireSSL: true
+  encryption: true
   # tags:
   #   - key: Environment
   #     value: base
