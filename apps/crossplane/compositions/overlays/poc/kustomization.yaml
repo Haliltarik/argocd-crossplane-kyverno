@@ -20,45 +20,54 @@ patches:
           - key: Project
             value: demo
 
-      # Définir la bucket policy comme STRING JSON (4 %s pour le nom du bucket)
+      # Patch 1
       - op: add
         path: /spec/pipeline/0/input/resources/0/patches/-
         value:
           type: CombineFromComposite
-          toFieldPath: spec.forProvider.policy
+          toFieldPath: spec.forProvider.policy.Statement[0].Resource[0]
           combine:
             variables:
               - fromFieldPath: metadata.name
-              - fromFieldPath: metadata.name
-              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: arn:aws:s3:::%s
+
+      # Patch 2
+      - op: add
+        path: /spec/pipeline/0/input/resources/0/patches/-
+        value:
+          type: CombineFromComposite
+          toFieldPath: spec.forProvider.policy.Statement[0].Resource[1]
+          combine:
+            variables:
               - fromFieldPath: metadata.name
             strategy: string
             string:
-              fmt: |
-                {
-                  "Version": "2012-10-17",
-                  "Statement": [
-                    {
-                      "Sid": "DenyNonSSLRequests",
-                      "Effect": "Deny",
-                      "Principal": "*",
-                      "Action": "s3:*",
-                      "Resource": [
-                        "arn:aws:s3:::%s",
-                        "arn:aws:s3:::%s/*"
-                      ],
-                      "Condition": { "Bool": { "aws:SecureTransport": "false" } }
-                    },
-                    {
-                      "Sid": "DenyOldTLSVersions",
-                      "Effect": "Deny",
-                      "Principal": "*",
-                      "Action": "s3:*",
-                      "Resource": [
-                        "arn:aws:s3:::%s",
-                        "arn:aws:s3:::%s/*"
-                      ],
-                      "Condition": { "NumericLessThan": { "s3:TlsVersion": "1.2" } }
-                    }
-                  ]
-                }
+              fmt: arn:aws:s3:::%s/*
+
+      # Patch 3
+      - op: add
+        path: /spec/pipeline/0/input/resources/0/patches/-
+        value:
+          type: CombineFromComposite
+          toFieldPath: spec.forProvider.policy.Statement[1].Resource[0]
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: arn:aws:s3:::%s
+
+      # Patch 4
+      - op: add
+        path: /spec/pipeline/0/input/resources/0/patches/-
+        value:
+          type: CombineFromComposite
+          toFieldPath: spec.forProvider.policy.Statement[1].Resource[1]
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: arn:aws:s3:::%s/*

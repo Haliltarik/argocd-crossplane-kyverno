@@ -28,14 +28,12 @@ spec:
                   versioningConfiguration:
                     status: Enabled
 
-                  # ✅ Secure-by-default: Block Public Access
                   publicAccessBlockConfiguration:
                     blockPublicAcls: true
                     blockPublicPolicy: true
                     ignorePublicAcls: true
                     restrictPublicBuckets: true
 
-                  # ✅ Secure-by-default: SSE AES256 (SSE-S3)
                   serverSideEncryptionConfiguration:
                     rules:
                       - applyServerSideEncryptionByDefault:
@@ -43,6 +41,31 @@ spec:
 
                   tagging:
                     tagSet: []
+
+                  # ✅ Policy YAML avec placeholders vides
+                  policy:
+                    Version: "2012-10-17"
+                    Statement:
+                      - Sid: DenyNonSSLRequests
+                        Effect: Deny
+                        Principal: "*"
+                        Action: "s3:*"
+                        Resource:
+                          - ""
+                          - ""
+                        Condition:
+                          Bool:
+                            aws:SecureTransport: "false"
+                      - Sid: DenyOldTLSVersions
+                        Effect: Deny
+                        Principal: "*"
+                        Action: "s3:*"
+                        Resource:
+                          - ""
+                          - ""
+                        Condition:
+                          NumericLessThan:
+                            s3:TlsVersion: "1.2"
 
             patches:
               - fromFieldPath: "spec.bucketName"
