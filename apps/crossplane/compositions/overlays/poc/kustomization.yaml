@@ -20,45 +20,78 @@ patches:
           - key: Project
             value: demo
 
-      # 2) Ajouter un patch qui définit la bucket policy (STRING JSON) avec 4 %s
+      # 1) Ajouter la policy au FORMAT MAP (pas string)
+      - op: add
+        path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/policy
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: DenyNonSSLRequests
+              Effect: Deny
+              Principal: "*"
+              Action: "s3:*"
+              Resource:
+                - ""   # sera rempli par patch
+                - ""   # sera rempli par patch
+              Condition:
+                Bool:
+                  aws:SecureTransport: "false"
+            - Sid: DenyOldTLSVersions
+              Effect: Deny
+              Principal: "*"
+              Action: "s3:*"
+              Resource:
+                - ""   # sera rempli par patch
+                - ""   # sera rempli par patch
+              Condition:
+                NumericLessThan:
+                  s3:TlsVersion: "1.2"
+
+      # 2) Remplir dynamiquement les ARN (4 patches ciblant les entrées du tableau)
       - op: add
         path: /spec/pipeline/0/input/resources/0/patches/-
         value:
           type: CombineFromComposite
-          toFieldPath: spec.forProvider.policy
+          toFieldPath: spec.forProvider.policy.Statement[0].Resource[0]
           combine:
             variables:
               - fromFieldPath: metadata.name
-              - fromFieldPath: metadata.name
-              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: arn:aws:s3:::%s
+
+      - op: add
+        path: /spec/pipeline/0/input/resources/0/patches/-
+        value:
+          type: CombineFromComposite
+          toFieldPath: spec.forProvider.policy.Statement[0].Resource[1]
+          combine:
+            variables:
               - fromFieldPath: metadata.name
             strategy: string
             string:
-              fmt: |
-                {
-                  "Version":"2012-10-17",
-                  "Statement":[
-                    {
-                      "Sid":"DenyNonSSLRequests",
-                      "Effect":"Deny",
-                      "Principal":"*",
-                      "Action":"s3:*",
-                      "Resource":[
-                        "arn:aws:s3:::%s",
-                        "arn:aws:s3:::%s/*"
-                      ],
-                      "Condition":{"Bool":{"aws:SecureTransport":"false"}}
-                    },
-                    {
-                      "Sid":"DenyOldTLSVersions",
-                      "Effect":"Deny",
-                      "Principal":"*",
-                      "Action":"s3:*",
-                      "Resource":[
-                        "arn:aws:s3:::%s",
-                        "arn:aws:s3:::%s/*"
-                      ],
-                      "Condition":{"NumericLessThan":{"s3:TlsVersion":"1.2"}}
-                    }
-                  ]
-                }
+              fmt: arn:aws:s3:::%s/*
+
+      - op: add
+        path: /spec/pipeline/0/input/resources/0/patches/-
+        value:
+          type: CombineFromComposite
+          toFieldPath: spec.forProvider.policy.Statement[1].Resource[0]
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: arn:aws:s3:::%s
+
+      - op: add
+        path: /spec/pipeline/0/input/resources/0/patches/-
+        value:
+          type: CombineFromComposite
+          toFieldPath: spec.forProvider.policy.Statement[1].Resource[1]
+          combine:
+            variables:
+              - fromFieldPath: metadata.name
+            strategy: string
+            string:
+              fmt: arn:aws:s3:::%s/*
