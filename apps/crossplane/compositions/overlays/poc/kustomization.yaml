@@ -9,7 +9,8 @@ patches:
       kind: Composition
       name: s3bucket-default
     patch: |-
-      - op: add
+      # 1) Remplacer tagSet (la clé existe déjà en base)
+      - op: replace
         path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/tagging/tagSet
         value:
           - key: Environment
@@ -18,79 +19,46 @@ patches:
             value: fac
           - key: Project
             value: demo
-      # 1) Ajoute la policy (YAML map) dans la base, avec des "placeholders" vides dans Resource
-      - op: add
-        path: /spec/pipeline/0/input/resources/0/base/spec/forProvider/policy
-        value:
-          Version: "2012-10-17"
-          Statement:
-            - Sid: DenyNonSSLRequests
-              Effect: Deny
-              Principal: "*"
-              Action: "s3:*"
-              Resource:
-                - ""   # sera rempli par patch (ARN bucket)
-                - ""   # sera rempli par patch (ARN bucket/*)
-              Condition:
-                Bool:
-                  aws:SecureTransport: "false"
-            - Sid: DenyOldTLSVersions
-              Effect: Deny
-              Principal: "*"
-              Action: "s3:*"
-              Resource:
-                - ""   # sera rempli par patch (ARN bucket)
-                - ""   # sera rempli par patch (ARN bucket/*)
-              Condition:
-                NumericLessThan:
-                  s3:TlsVersion: "1.2"
 
-      # 2) Ajoute 4 patches CombineFromComposite pour remplir les ARNs dynamiquement
-
+      # 2) Ajouter un patch qui définit la bucket policy (STRING JSON) avec 4 %s
       - op: add
         path: /spec/pipeline/0/input/resources/0/patches/-
         value:
           type: CombineFromComposite
-          toFieldPath: spec.forProvider.policy.Statement[0].Resource[0]
+          toFieldPath: spec.forProvider.policy
           combine:
             variables:
               - fromFieldPath: metadata.name
-            strategy: string
-            string:
-              fmt: arn:aws:s3:::%s
-
-      - op: add
-        path: /spec/pipeline/0/input/resources/0/patches/-
-        value:
-          type: CombineFromComposite
-          toFieldPath: spec.forProvider.policy.Statement[0].Resource[1]
-          combine:
-            variables:
+              - fromFieldPath: metadata.name
+              - fromFieldPath: metadata.name
               - fromFieldPath: metadata.name
             strategy: string
             string:
-              fmt: arn:aws:s3:::%s/*
-
-      - op: add
-        path: /spec/pipeline/0/input/resources/0/patches/-
-        value:
-          type: CombineFromComposite
-          toFieldPath: spec.forProvider.policy.Statement[1].Resource[0]
-          combine:
-            variables:
-              - fromFieldPath: metadata.name
-            strategy: string
-            string:
-              fmt: arn:aws:s3:::%s
-
-      - op: add
-        path: /spec/pipeline/0/input/resources/0/patches/-
-        value:
-          type: CombineFromComposite
-          toFieldPath: spec.forProvider.policy.Statement[1].Resource[1]
-          combine:
-            variables:
-              - fromFieldPath: metadata.name
-            strategy: string
-            string:
-              fmt: arn:aws:s3:::%s/*
+              fmt: |
+                {
+                  "Version":"2012-10-17",
+                  "Statement":[
+                    {
+                      "Sid":"DenyNonSSLRequests",
+                      "Effect":"Deny",
+                      "Principal":"*",
+                      "Action":"s3:*",
+                      "Resource":[
+                        "arn:aws:s3:::%s",
+                        "arn:aws:s3:::%s/*"
+                      ],
+                      "Condition":{"Bool":{"aws:SecureTransport":"false"}}
+                    },
+                    {
+                      "Sid":"DenyOldTLSVersions",
+                      "Effect":"Deny",
+                      "Principal":"*",
+                      "Action":"s3:*",
+                      "Resource":[
+                        "arn:aws:s3:::%s",
+                        "arn:aws:s3:::%s/*"
+                      ],
+                      "Condition":{"NumericLessThan":{"s3:TlsVersion":"1.2"}}
+                    }
+                  ]
+                }
