@@ -15,6 +15,7 @@ spec:
         apiVersion: v1
         kind: PatchSet
         resources:
+          # 1️⃣ Le Bucket S3 principal
           - name: s3bucket
             base:
               apiVersion: s3.aws.crossplane.io/v1beta1
@@ -27,52 +28,87 @@ spec:
                   acl: private
                   versioningConfiguration:
                     status: Enabled
-
                   publicAccessBlockConfiguration:
                     blockPublicAcls: true
                     blockPublicPolicy: true
                     ignorePublicAcls: true
                     restrictPublicBuckets: true
-
                   serverSideEncryptionConfiguration:
                     rules:
                       - applyServerSideEncryptionByDefault:
                           sseAlgorithm: AES256
-
                   tagging:
                     tagSet: []
-
-                  # ✅ Policy YAML avec placeholders vides
-                  policy:
-                    Version: "2012-10-17"
-                    Statement:
-                      - Sid: DenyNonSSLRequests
-                        Effect: Deny
-                        Principal: "*"
-                        Action: "s3:*"
-                        Resource:
-                          - ""
-                          - ""
-                        Condition:
-                          Bool:
-                            aws:SecureTransport: "false"
-                      - Sid: DenyOldTLSVersions
-                        Effect: Deny
-                        Principal: "*"
-                        Action: "s3:*"
-                        Resource:
-                          - ""
-                          - ""
-                        Condition:
-                          NumericLessThan:
-                            s3:TlsVersion: "1.2"
-
             patches:
               - fromFieldPath: "spec.bucketName"
                 toFieldPath: "metadata.name"
-
               - fromFieldPath: "spec.location"
                 toFieldPath: "spec.forProvider.locationConstraint"
-
               - fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
+
+          # 2️⃣ La BucketPolicy S3 (créée uniquement si requireSSL = true)
+          - name: s3bucketpolicy
+            base:
+              apiVersion: s3.aws.crossplane.io/v1beta1
+              kind: BucketPolicy
+              spec:
+                providerConfigRef:
+                  name: default
+                forProvider:
+                  bucketName: ""
+                  policy: {}
+            patches:
+              # On conditionne la création sur requireSSL = true
+              - type: ToCompositeFieldPath
+                fromFieldPath: "spec.requireSSL"
+                policy:
+                  fromFieldPath: Required
+                transforms:
+                  - type: map
+                    map:
+                      "true": "create"
+
+              # Patch du nom du bucket dans la policy
+              - fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.bucketName"
+
+              # Génération de la policy HTTPS + TLS1.2 dynamique
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: "spec.bucketName"
+                    - fromFieldPath: "spec.bucketName"
+                    - fromFieldPath: "spec.bucketName"
+                    - fromFieldPath: "spec.bucketName"
+                  strategy: string
+                  string:
+                    fmt: |
+                      {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                          {
+                            "Sid": "DenyNonSSLRequests",
+                            "Effect": "Deny",
+                            "Principal": "*",
+                            "Action": "s3:*",
+                            "Resource": [
+                              "arn:aws:s3:::%s",
+                              "arn:aws:s3:::%s/*"
+                            ],
+                            "Condition": { "Bool": { "aws:SecureTransport": "false" } }
+                          },
+                          {
+                            "Sid": "DenyOldTLSVersions",
+                            "Effect": "Deny",
+                            "Principal": "*",
+                            "Action": "s3:*",
+                            "Resource": [
+                              "arn:aws:s3:::%s",
+                              "arn:aws:s3:::%s/*"
+                            ],
+                            "Condition": { "NumericLessThan": { "s3:TlsVersion": "1.2" } }
+                          }
+                        ]
+                      }
+                toFieldPath: "spec.forProvider.policy"
