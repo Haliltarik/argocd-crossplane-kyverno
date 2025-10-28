@@ -112,66 +112,66 @@ spec:
                 restrictPublicBuckets: true
 
 ---
-# Policy pour générer automatiquement une bucket policy SSL si elle n'existe pas
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: generate-s3-ssl-policy
-  annotations:
-    policies.kyverno.io/title: Generate SSL Bucket Policy for S3
-    policies.kyverno.io/category: Security
-    policies.kyverno.io/severity: medium
-    policies.kyverno.io/subject: Bucket
-    policies.kyverno.io/description: >-
-      Cette policy génère automatiquement une bucket policy SSL/TLS
-      si aucune policy n'est définie sur le bucket S3.
-spec:
-  validationFailureAction: audit  # Mode audit car on génère du contenu
-  background: true
-  rules:
-    - name: add-ssl-policy-if-missing
-      match:
-        any:
-          - resources:
-              kinds:
-                - Bucket
-              apiGroups:
-                - s3.aws.crossplane.io
-      preconditions:
-        all:
-          # Seulement si aucune policy n'existe
-          - key: "{{ request.object.spec.forProvider.policy || '' }}"
-            operator: Equals
-            value: ""
-      mutate:
-        patchStrategicMerge:
-          spec:
-            forProvider:
-              policy:
-                Version: "2012-10-17"
-                Statement:
-                  - Sid: "DenyInsecureConnections"
-                    Effect: "Deny"
-                    Principal: "*"
-                    Action: "s3:*"
-                    Resource:
-                      - "arn:aws:s3:::{{ request.object.metadata.name }}/*"
-                      - "arn:aws:s3:::{{ request.object.metadata.name }}"
-                    Condition:
-                      Bool:
-                        "aws:SecureTransport": "false"
-                  - Sid: "DenyOldTLSVersions"
-                    Effect: "Deny"
-                    Principal: "*"
-                    Action: "s3:*"
-                    Resource:
-                      - "arn:aws:s3:::{{ request.object.metadata.name }}/*"
-                      - "arn:aws:s3:::{{ request.object.metadata.name }}"
-                    Condition:
-                      NumericLessThan:
-                        "s3:TlsVersion": "1.2"
+# # Policy pour générer automatiquement une bucket policy SSL si elle n'existe pas
+# apiVersion: kyverno.io/v1
+# kind: ClusterPolicy
+# metadata:
+#   name: generate-s3-ssl-policy
+#   annotations:
+#     policies.kyverno.io/title: Generate SSL Bucket Policy for S3
+#     policies.kyverno.io/category: Security
+#     policies.kyverno.io/severity: medium
+#     policies.kyverno.io/subject: Bucket
+#     policies.kyverno.io/description: >-
+#       Cette policy génère automatiquement une bucket policy SSL/TLS
+#       si aucune policy n'est définie sur le bucket S3.
+# spec:
+#   validationFailureAction: audit  # Mode audit car on génère du contenu
+#   background: true
+#   rules:
+#     - name: add-ssl-policy-if-missing
+#       match:
+#         any:
+#           - resources:
+#               kinds:
+#                 - Bucket
+#               apiGroups:
+#                 - s3.aws.crossplane.io
+#       preconditions:
+#         all:
+#           # Seulement si aucune policy n'existe
+#           - key: "{{ request.object.spec.forProvider.policy || '' }}"
+#             operator: Equals
+#             value: ""
+#       mutate:
+#         patchStrategicMerge:
+#           spec:
+#             forProvider:
+#               policy:
+#                 Version: "2012-10-17"
+#                 Statement:
+#                   - Sid: "DenyInsecureConnections"
+#                     Effect: "Deny"
+#                     Principal: "*"
+#                     Action: "s3:*"
+#                     Resource:
+#                       - "arn:aws:s3:::{{ request.object.metadata.name }}/*"
+#                       - "arn:aws:s3:::{{ request.object.metadata.name }}"
+#                     Condition:
+#                       Bool:
+#                         "aws:SecureTransport": "false"
+#                   - Sid: "DenyOldTLSVersions"
+#                     Effect: "Deny"
+#                     Principal: "*"
+#                     Action: "s3:*"
+#                     Resource:
+#                       - "arn:aws:s3:::{{ request.object.metadata.name }}/*"
+#                       - "arn:aws:s3:::{{ request.object.metadata.name }}"
+#                     Condition:
+#                       NumericLessThan:
+#                         "s3:TlsVersion": "1.2"
 
----
+# ---
 # Policy pour les Claims (XR) S3
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
