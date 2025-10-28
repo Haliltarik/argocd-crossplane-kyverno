@@ -37,6 +37,6 @@ spec:
               - fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
               - fromFieldPath: "spec.requireSSL"
-                toFieldPath: "spec.forProvider.requireSSL"
+                toFieldPath: "spec.requireSSL"
               - fromFieldPath: "spec.encryption"
-                toFieldPath: "spec.forProvider.encryption"
+                toFieldPath: "spec.encryption"

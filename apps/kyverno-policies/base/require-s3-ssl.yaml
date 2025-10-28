@@ -229,6 +229,5 @@ spec:
         message: "Les XBuckets doivent spécifier requireSSL: true et encryption: true"
         pattern:
           spec:
-            forProvider:
               =(requireSSL): true
               =(encryption): true
