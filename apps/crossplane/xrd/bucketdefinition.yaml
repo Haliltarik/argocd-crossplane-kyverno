@@ -47,6 +47,8 @@ spec:
                 requireSSL:                   
                   type: boolean
                   description: "Forcer HTTPS/TLS >= 1.2"
+                  default: false
                 encryption:                   
                   type: boolean
                   description: "Activer SSE (aws:kms - clé AWS gérée)"
+                  default: false

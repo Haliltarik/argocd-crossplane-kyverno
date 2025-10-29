@@ -8,6 +8,8 @@ spec:
     kind: XBucket
   mode: Pipeline
   pipeline:
+
+    # STEP 1 : Create S3 Bucket
     - step: s3bucket
       functionRef:
         name: crossplane-contrib-function-patch-and-transform
@@ -15,30 +17,25 @@ spec:
         apiVersion: v1
         kind: PatchSet
         resources:
-          # 1️⃣ Le Bucket S3 principal
           - name: s3bucket
             base:
               apiVersion: s3.aws.crossplane.io/v1beta1
               kind: Bucket
               spec:
-                providerConfigRef:
-                  name: default
-                deletionPolicy: Delete
                 forProvider:
                   acl: private
                   versioningConfiguration:
                     status: Enabled
+                  tagging:
+                    tagSet: []
                   publicAccessBlockConfiguration:
                     blockPublicAcls: true
                     blockPublicPolicy: true
                     ignorePublicAcls: true
                     restrictPublicBuckets: true
-                  serverSideEncryptionConfiguration:
-                    rules:
-                      - applyServerSideEncryptionByDefault:
-                          sseAlgorithm: AES256
-                  tagging:
-                    tagSet: []
+                providerConfigRef:
+                  name: default
+                deletionPolicy: Delete
             patches:
               - fromFieldPath: "spec.bucketName"
                 toFieldPath: "metadata.name"
@@ -47,68 +44,64 @@ spec:
               - fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
 
-          # 2️⃣ La BucketPolicy S3 (créée uniquement si requireSSL = true)
-          - name: s3bucketpolicy
+    # STEP 2 : Conditional SSL Bucket Policy
+    - step: ssl-policy
+      functionRef:
+        name: crossplane-contrib-function-patch-and-transform
+      input:
+        apiVersion: v1
+        kind: PatchSet
+        resources:
+          - name: sslpolicy
             base:
               apiVersion: s3.aws.crossplane.io/v1beta1
               kind: BucketPolicy
               spec:
-                providerConfigRef:
-                  name: default
                 forProvider:
-                  bucketName: ""
-                  policy: {}
+                  bucketRef:
+                    name: "" # Patched
+                  policy: ""
             patches:
-              # On conditionne la création sur requireSSL = true
-              - type: ToCompositeFieldPath
-                fromFieldPath: "spec.requireSSL"
-                policy:
-                  fromFieldPath: Required
-                transforms:
-                  - type: map
-                    map:
-                      "true": "create"
-
-              # Patch du nom du bucket dans la policy
               - fromFieldPath: "spec.bucketName"
-                toFieldPath: "spec.forProvider.bucketName"
-
-              # Génération de la policy HTTPS + TLS1.2 dynamique
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                    - fromFieldPath: "spec.bucketName"
-                    - fromFieldPath: "spec.bucketName"
-                    - fromFieldPath: "spec.bucketName"
-                    - fromFieldPath: "spec.bucketName"
-                  strategy: string
-                  string:
-                    fmt: |
-                      {
-                        "Version": "2012-10-17",
-                        "Statement": [
-                          {
-                            "Sid": "DenyNonSSLRequests",
-                            "Effect": "Deny",
-                            "Principal": "*",
-                            "Action": "s3:*",
-                            "Resource": [
-                              "arn:aws:s3:::%s",
-                              "arn:aws:s3:::%s/*"
-                            ],
-                            "Condition": { "Bool": { "aws:SecureTransport": "false" } }
-                          },
-                          {
-                            "Sid": "DenyOldTLSVersions",
-                            "Effect": "Deny",
-                            "Principal": "*",
-                            "Action": "s3:*",
-                            "Resource": [
-                              "arn:aws:s3:::%s",
-                              "arn:aws:s3:::%s/*"
-                            ],
-                            "Condition": { "NumericLessThan": { "s3:TlsVersion": "1.2" } }
-                          }
-                        ]
-                      }
+                toFieldPath: "spec.forProvider.bucketRef.name"
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy"
+                transforms:
+                  - type: string
+                    string:
+                      fmt: |
+                        {"Version":"2012-10-17","Statement":[{"Sid":"DenyUnencrypted","Effect":"Deny","Principal":"*","Action":"s3:*","Resource":["arn:aws:s3:::%s","arn:aws:s3:::%s/*"],"Condition":{"Bool":{"aws:SecureTransport":"false"}}}]}
+                      fmtArgs:
+                        - fromFieldPath: "spec.bucketName"
+                        - fromFieldPath: "spec.bucketName"
+            conditions:
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.requireSSL"
+                toFieldPath: "ready"
+
+    # STEP 3 : Optional Encryption SSE-S3
+    - step: encryption
+      functionRef:
+        name: crossplane-contrib-function-patch-and-transform
+      input:
+        apiVersion: v1
+        kind: PatchSet
+        resources:
+          - name: encryption
+            base:
+              apiVersion: s3.aws.crossplane.io/v1beta1
+              kind: Bucket
+              spec:
+                forProvider:
+                  serverSideEncryptionConfiguration:
+                    - rules:
+                        - applyServerSideEncryptionByDefault:
+                            sseAlgorithm: AES256
+            patches:
+              - fromFieldPath: "spec.bucketName"
+                toFieldPath: "metadata.name"
+            conditions:
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.encryption"
+                toFieldPath: "ready"
