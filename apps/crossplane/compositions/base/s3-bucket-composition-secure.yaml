@@ -46,7 +46,7 @@ spec:
                       - sid: enforce-tls-12-requests-only
                         effect: Deny
                         principal:
-                          aws: "*"
+                          allowAnon: true  # ✅ Équivalent de "AWS": "*"
                         action:
                           - "*"
                         resource: []  # sera patché
@@ -60,7 +60,7 @@ spec:
                       - sid: enforce-tls-requests-only
                         effect: Deny
                         principal:
-                          aws: "*"
+                          allowAnon: true  # ✅ Équivalent de "AWS": "*"
                         action:
                           - "*"
                         resource: []  # sera patché
@@ -85,7 +85,7 @@ spec:
                 fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
               
-              # ✅ Patch les ARNs pour le statement 1 (TLS 1.2)
+              # ✅ Patch les ARNs pour le statement 1 (TLS 1.2) - resource[0]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[0].resource[0]"
@@ -95,6 +95,7 @@ spec:
                       type: Format
                       fmt: "arn:aws:s3:::%s/*"
               
+              # ✅ Patch les ARNs pour le statement 1 (TLS 1.2) - resource[1]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[0].resource[1]"
@@ -104,7 +105,7 @@ spec:
                       type: Format
                       fmt: "arn:aws:s3:::%s"
               
-              # ✅ Patch les ARNs pour le statement 2 (HTTPS)
+              # ✅ Patch les ARNs pour le statement 2 (HTTPS) - resource[0]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[1].resource[0]"
@@ -114,6 +115,7 @@ spec:
                       type: Format
                       fmt: "arn:aws:s3:::%s/*"
               
+              # ✅ Patch les ARNs pour le statement 2 (HTTPS) - resource[1]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[1].resource[1]"
