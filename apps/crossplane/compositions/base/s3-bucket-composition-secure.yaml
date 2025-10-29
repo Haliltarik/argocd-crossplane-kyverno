@@ -31,11 +31,6 @@ spec:
                   versioningConfiguration:
                     status: Enabled
                   
-                  # ✅ Logging S3 (ENGIE-AWS-S3-Logging) - NOUVEAU
-                  # loggingConfiguration:
-                  #   targetBucket: engie-s3-access-logs-eu-west-1  # Bucket centralisé pour les logs
-                  #   targetPrefix: ""  # sera patché avec le nom du bucket
-                  
                   # ✅ Désactiver Website Hosting (ENGIE-AWS-S3-WebsiteHosting) - NOUVEAU
                   # On ne spécifie pas websiteConfiguration = désactivé par défaut
                   
@@ -131,17 +126,7 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
-              
-              # ✅ Patch logging prefix avec le nom du bucket
-              - type: FromCompositeFieldPath
-                fromFieldPath: "spec.bucketName"
-                toFieldPath: "spec.forProvider.loggingConfiguration.targetPrefix"
-                transforms:
-                  - type: string
-                    string:
-                      type: Format
-                      fmt: "s3-access-logs/%s/"
-              
+                           
               # ✅ Patches pour Statement 1 (TLS 1.2)
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
