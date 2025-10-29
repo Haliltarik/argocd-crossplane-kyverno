@@ -5,6 +5,7 @@ metadata:
   name: s3bucket-secure
   labels:
     security: enabled
+    compliance: engie-aws-standards
 spec:
   compositeTypeRef:
     apiVersion: s3.aws.engie.org/v1alpha1
@@ -25,28 +26,44 @@ spec:
               spec:
                 forProvider:
                   acl: private
+                  
+                  # ✅ Versioning (ENGIE-AWS-S3-Versioning)
                   versioningConfiguration:
                     status: Enabled
+                  
+                  # ✅ Logging S3 (ENGIE-AWS-S3-Logging) - NOUVEAU
+                  # loggingConfiguration:
+                  #   targetBucket: engie-s3-access-logs-eu-west-1  # Bucket centralisé pour les logs
+                  #   targetPrefix: ""  # sera patché avec le nom du bucket
+                  
+                  # ✅ Désactiver Website Hosting (ENGIE-AWS-S3-WebsiteHosting) - NOUVEAU
+                  # On ne spécifie pas websiteConfiguration = désactivé par défaut
+                  
                   tagging:
                     tagSet: []
+                  
+                  # ✅ Chiffrement au repos (ENGIE-AWS-S3-EncryptionAtRestNotCMK)
                   serverSideEncryptionConfiguration:
                     rules:
                       - applyServerSideEncryptionByDefault:
                           sseAlgorithm: AES256
+                  
+                  # ✅ Blocage accès public (ENGIE-AWS-S3-CanBePublic, ENGIE-AWS-S3-ACL)
                   publicAccessBlockConfiguration:
                     blockPublicAcls: true
                     blockPublicPolicy: true
                     ignorePublicAcls: true
                     restrictPublicBuckets: true
-                  # ✅ Policy SSL + TLS 1.2 minimum
+                  
+                  # ✅ Policies TLS 1.2 + HTTPS + EncryptionHeader
                   policy:
                     version: "2012-10-17"
                     statements:
-                      # Statement 1 : Refuser TLS < 1.2
+                      # Statement 1 : Refuser TLS < 1.2 (ENGIE-AWS-S3-NoEncryptionInTransit)
                       - sid: enforce-tls-12-requests-only
                         effect: Deny
                         principal:
-                          allowAnon: true  # ✅ Équivalent de "AWS": "*"
+                          allowAnon: true
                         action:
                           - "*"
                         resource: []  # sera patché
@@ -56,11 +73,11 @@ spec:
                               - key: "s3:TlsVersion"
                                 stringValue: "1.2"
                       
-                      # Statement 2 : Refuser HTTP (non-SSL)
+                      # Statement 2 : Refuser HTTP (ENGIE-AWS-S3-NoEncryptionInTransit)
                       - sid: enforce-tls-requests-only
                         effect: Deny
                         principal:
-                          allowAnon: true  # ✅ Équivalent de "AWS": "*"
+                          allowAnon: true
                         action:
                           - "*"
                         resource: []  # sera patché
@@ -69,9 +86,39 @@ spec:
                             conditions:
                               - key: "aws:SecureTransport"
                                 stringValue: "false"
+                      
+                      # Statement 3 : Forcer header encryption (ENGIE-AWS-S3-EncryptionHeader) - NOUVEAU
+                      - sid: deny-unencrypted-object-uploads
+                        effect: Deny
+                        principal:
+                          allowAnon: true
+                        action:
+                          - "s3:PutObject"
+                        resource: []  # sera patché (bucket/*)
+                        condition:
+                          - operatorKey: StringNotEquals
+                            conditions:
+                              - key: "s3:x-amz-server-side-encryption"
+                                stringValue: "AES256"
+                      
+                      # Statement 4 : Refuser uploads sans header encryption
+                      - sid: deny-unencrypted-object-uploads-no-header
+                        effect: Deny
+                        principal:
+                          allowAnon: true
+                        action:
+                          - "s3:PutObject"
+                        resource: []  # sera patché (bucket/*)
+                        condition:
+                          - operatorKey: "Null"
+                            conditions:
+                              - key: "s3:x-amz-server-side-encryption"
+                                stringValue: "true"
+                
                 providerConfigRef:
                   name: default
                 deletionPolicy: Delete
+            
             patches:
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
@@ -85,7 +132,17 @@ spec:
                 fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
               
-              # ✅ Patch les ARNs pour le statement 1 (TLS 1.2) - resource[0]
+              # ✅ Patch logging prefix avec le nom du bucket
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.loggingConfiguration.targetPrefix"
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "s3-access-logs/%s/"
+              
+              # ✅ Patches pour Statement 1 (TLS 1.2)
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[0].resource[0]"
@@ -95,7 +152,6 @@ spec:
                       type: Format
                       fmt: "arn:aws:s3:::%s/*"
               
-              # ✅ Patch les ARNs pour le statement 1 (TLS 1.2) - resource[1]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[0].resource[1]"
@@ -105,7 +161,7 @@ spec:
                       type: Format
                       fmt: "arn:aws:s3:::%s"
               
-              # ✅ Patch les ARNs pour le statement 2 (HTTPS) - resource[0]
+              # ✅ Patches pour Statement 2 (HTTPS)
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[1].resource[0]"
@@ -115,7 +171,6 @@ spec:
                       type: Format
                       fmt: "arn:aws:s3:::%s/*"
               
-              # ✅ Patch les ARNs pour le statement 2 (HTTPS) - resource[1]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[1].resource[1]"
@@ -124,3 +179,23 @@ spec:
                     string:
                       type: Format
                       fmt: "arn:aws:s3:::%s"
+              
+              # ✅ Patches pour Statement 3 (EncryptionHeader - objets)
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.policy.statements[2].resource[0]"
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "arn:aws:s3:::%s/*"
+              
+              # ✅ Patches pour Statement 4 (EncryptionHeader - no header)
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.policy.statements[3].resource[0]"
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "arn:aws:s3:::%s/*"
