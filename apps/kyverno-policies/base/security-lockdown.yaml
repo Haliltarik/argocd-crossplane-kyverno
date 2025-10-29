@@ -97,12 +97,12 @@ spec:
         message: |
           ❌ ACCÈS REFUSÉ : Création de Compositions Crossplane interdite.
           
-          Les Compositions sont gérées centralement par l'équipe plateforme
+          Les Compositions sont gérées centralement par l'équipe Factory
           pour garantir la conformité et la sécurité.
           
           Si vous avez besoin d'une nouvelle Composition :
-          1. Créez une demande : https://jira.engie.com/create-composition
-          2. L'équipe plateforme validera et créera la Composition
+          1. Créez une demande : https://engie-dmpa-dsi-digital.atlassian.net/jira
+          2. L'équipe Factory validera et créera la Composition
           3. Vous pourrez ensuite l'utiliser dans vos BucketClaims
           
           Compositions approuvées disponibles :
@@ -157,7 +157,7 @@ spec:
           par l'équipe plateforme.
           
           Si vous avez besoin d'un nouveau type de ressource :
-          1. Créez une demande : https://jira.engie.com/create-xrd
+          1. Créez une demande : https://engie-dmpa-dsi-digital.atlassian.net/jira
           2. Justifiez le besoin business
           3. L'équipe plateforme évaluera et créera le XRD si approuvé
           
