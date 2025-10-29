@@ -25,9 +25,9 @@ patches:
           - key: Owner
             value: fac
       # # Activer le SSL et le chiffrement
-      - op: replace
+      - op: add
         path: /spec/requireSSL
         value: true
-      - op: replace
+      - op: add
         path: /spec/encryption
         value: true

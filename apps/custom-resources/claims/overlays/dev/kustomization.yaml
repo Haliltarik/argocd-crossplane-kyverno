@@ -24,3 +24,9 @@ patches:
             value: fac
           - key: Application
             value: Crossplane
+      - op: add
+        path: /spec/requireSSL
+        value: false
+      - op: add
+        path: /spec/encryption
+        value: false

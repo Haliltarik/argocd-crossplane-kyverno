@@ -1,3 +1,4 @@
+# apps/crossplane/xrd/bucketdefinition.yaml
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -20,10 +21,9 @@ spec:
           properties:
             spec:
               type: object
-              required:                
+              required:
                 - bucketName
                 - location
-                #- tags
               properties:
                 bucketName:
                   type: string
@@ -31,6 +31,14 @@ spec:
                 location:
                   type: string
                   description: "Région AWS (ex: eu-west-1)"
+                requireSSL:
+                  type: boolean
+                  description: "Forcer l'utilisation de SSL/TLS"
+                  default: false
+                encryption:
+                  type: boolean
+                  description: "Activer le chiffrement côté serveur"
+                  default: false
                 tags:
                   type: array
                   description: "Tags clés/valeurs appliqués au bucket"
@@ -44,11 +52,3 @@ spec:
                         type: string
                       value:
                         type: string
-                requireSSL:                   
-                  type: boolean
-                  description: "Forcer HTTPS/TLS >= 1.2"
-                  default: false
-                encryption:                   
-                  type: boolean
-                  description: "Activer SSE (aws:kms - clé AWS gérée)"
-                  default: false
