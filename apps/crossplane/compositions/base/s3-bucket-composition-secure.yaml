@@ -80,7 +80,7 @@ spec:
                           - operatorKey: Bool
                             conditions:
                               - key: "aws:SecureTransport"
-                                stringValue: "false"  # ✅ CORRIGÉ: stringValue au lieu de boolValue
+                                stringValue: "false"
                 providerConfigRef:
                   name: default
                 deletionPolicy: Delete
@@ -93,7 +93,12 @@ spec:
                     string:
                       type: Format
                       fmt: "%s-ssl-policy"
-              
+
+              # Patch région ➜ Évite l'erreur Crossplane ✅
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.location"
+                toFieldPath: "spec.forProvider.region"
+
               # Patch le ARN du bucket dans resource[0]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
@@ -103,7 +108,7 @@ spec:
                     string:
                       type: Format
                       fmt: "arn:aws:s3:::%s"
-              
+
               # Patch le ARN du bucket dans resource[1]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
