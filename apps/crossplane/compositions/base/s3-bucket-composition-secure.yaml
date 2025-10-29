@@ -38,17 +38,32 @@ spec:
                     blockPublicPolicy: true
                     ignorePublicAcls: true
                     restrictPublicBuckets: true
-                  # ✅ Policy SSL intégrée directement dans le Bucket
+                  # ✅ Policy SSL + TLS 1.2 minimum
                   policy:
                     version: "2012-10-17"
                     statements:
-                      - sid: DenyInsecureTransport
+                      # Statement 1 : Refuser TLS < 1.2
+                      - sid: enforce-tls-12-requests-only
                         effect: Deny
                         principal:
-                          allowAnon: true
+                          aws: "*"
                         action:
-                          - "s3:*"
-                        resource: []  # sera patché dynamiquement
+                          - "*"
+                        resource: []  # sera patché
+                        condition:
+                          - operatorKey: NumericLessThan
+                            conditions:
+                              - key: "s3:TlsVersion"
+                                stringValue: "1.2"
+                      
+                      # Statement 2 : Refuser HTTP (non-SSL)
+                      - sid: enforce-tls-requests-only
+                        effect: Deny
+                        principal:
+                          aws: "*"
+                        action:
+                          - "*"
+                        resource: []  # sera patché
                         condition:
                           - operatorKey: Bool
                             conditions:
@@ -70,7 +85,7 @@ spec:
                 fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
               
-              # ✅ Patch le ARN du bucket dans policy.statements[0].resource[0]
+              # ✅ Patch les ARNs pour le statement 1 (TLS 1.2)
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[0].resource[0]"
@@ -78,9 +93,8 @@ spec:
                   - type: string
                     string:
                       type: Format
-                      fmt: "arn:aws:s3:::%s"
+                      fmt: "arn:aws:s3:::%s/*"
               
-              # ✅ Patch le ARN du bucket dans policy.statements[0].resource[1]
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.policy.statements[0].resource[1]"
@@ -88,4 +102,23 @@ spec:
                   - type: string
                     string:
                       type: Format
+                      fmt: "arn:aws:s3:::%s"
+              
+              # ✅ Patch les ARNs pour le statement 2 (HTTPS)
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.policy.statements[1].resource[0]"
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
                       fmt: "arn:aws:s3:::%s/*"
+              
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.policy.statements[1].resource[1]"
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "arn:aws:s3:::%s"
