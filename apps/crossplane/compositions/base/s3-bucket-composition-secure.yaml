@@ -30,10 +30,12 @@ spec:
                     status: Enabled
                   tagging:
                     tagSet: []
+                  # ✅ AJOUTÉ: serverSideEncryptionConfiguration (requis par Kyverno)
                   serverSideEncryptionConfiguration:
                     rules:
                       - applyServerSideEncryptionByDefault:
                           sseAlgorithm: AES256
+                  # ✅ AJOUTÉ: publicAccessBlockConfiguration (requis par Kyverno)
                   publicAccessBlockConfiguration:
                     blockPublicAcls: true
                     blockPublicPolicy: true
@@ -78,7 +80,7 @@ spec:
                           - operatorKey: Bool
                             conditions:
                               - key: "aws:SecureTransport"
-                                boolValue: false
+                                stringValue: "false"  # ✅ CORRIGÉ: stringValue au lieu de boolValue
                 providerConfigRef:
                   name: default
                 deletionPolicy: Delete
