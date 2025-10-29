@@ -1,0 +1,288 @@
+# apps/kyverno-policies/base/security-lockdown.yaml
+#
+# Policies pour empêcher les développeurs de contourner les contrôles de sécurité
+# en créant leurs propres Compositions, XRD, ou en créant directement des Buckets AWS
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-direct-bucket-creation
+  annotations:
+    policies.kyverno.io/title: Block Direct AWS Bucket Creation
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Bucket
+    policies.kyverno.io/description: >-
+      Empêche les développeurs de créer directement des Buckets AWS sans passer
+      par les BucketClaims approuvés. Seul Crossplane peut créer des Buckets.
+spec:
+  validationFailureAction: enforce
+  background: false
+  rules:
+    - name: deny-direct-bucket-creation-by-users
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      exclude:
+        any:
+          # ✅ Autoriser seulement les ServiceAccounts de Crossplane
+          - subjects:
+              - kind: ServiceAccount
+                name: crossplane
+                namespace: crossplane-system
+          - subjects:
+              - kind: ServiceAccount
+                name: crossplane-*
+                namespace: crossplane-system
+      validate:
+        message: |
+          ❌ ACCÈS REFUSÉ : Création directe de Buckets S3 interdite.
+          
+          Les Buckets AWS doivent être créés via BucketClaims pour garantir
+          l'application des politiques de sécurité ENGIE.
+          
+          Action requise : Créez un BucketClaim au lieu d'un Bucket :
+            apiVersion: s3.aws.engie.org/v1alpha1
+            kind: BucketClaim
+            spec:
+              requireSSL: true
+              encryption: true
+        deny: {}
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-unauthorized-compositions
+  annotations:
+    policies.kyverno.io/title: Block Unauthorized Crossplane Compositions
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Composition
+    policies.kyverno.io/description: >-
+      Empêche la création de Compositions non approuvées. Seule l'équipe
+      plateforme peut créer des Compositions.
+spec:
+  validationFailureAction: enforce
+  background: false
+  rules:
+    - name: deny-user-created-compositions
+      match:
+        any:
+          - resources:
+              kinds:
+                - Composition
+              apiGroups:
+                - apiextensions.crossplane.io
+      exclude:
+        any:
+          # ✅ Autoriser seulement les admins plateforme
+          - subjects:
+              - kind: ServiceAccount
+                name: argocd-*
+                namespace: argocd
+          - subjects:
+              - kind: ServiceAccount
+                name: crossplane
+                namespace: crossplane-system
+          - subjects:
+              - kind: Group
+                name: platform-engineering  # Votre groupe admin
+      validate:
+        message: |
+          ❌ ACCÈS REFUSÉ : Création de Compositions Crossplane interdite.
+          
+          Les Compositions sont gérées centralement par l'équipe plateforme
+          pour garantir la conformité et la sécurité.
+          
+          Si vous avez besoin d'une nouvelle Composition :
+          1. Créez une demande : https://jira.engie.com/create-composition
+          2. L'équipe plateforme validera et créera la Composition
+          3. Vous pourrez ensuite l'utiliser dans vos BucketClaims
+          
+          Compositions approuvées disponibles :
+          - s3bucket-secure (recommandé)
+          - s3bucket-default (legacy, non recommandé)
+        deny: {}
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-unauthorized-xrds
+  annotations:
+    policies.kyverno.io/title: Block Unauthorized XRD Creation
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: CompositeResourceDefinition
+    policies.kyverno.io/description: >-
+      Empêche la création de XRDs (Custom Resource Definitions) non approuvés.
+      Seule l'équipe plateforme peut créer des XRDs.
+spec:
+  validationFailureAction: enforce
+  background: false
+  rules:
+    - name: deny-user-created-xrds
+      match:
+        any:
+          - resources:
+              kinds:
+                - CompositeResourceDefinition
+              apiGroups:
+                - apiextensions.crossplane.io
+      exclude:
+        any:
+          # ✅ Autoriser seulement les admins plateforme
+          - subjects:
+              - kind: ServiceAccount
+                name: argocd-*
+                namespace: argocd
+          - subjects:
+              - kind: ServiceAccount
+                name: crossplane
+                namespace: crossplane-system
+          - subjects:
+              - kind: Group
+                name: platform-engineering
+      validate:
+        message: |
+          ❌ ACCÈS REFUSÉ : Création de XRD (CompositeResourceDefinition) interdite.
+          
+          Les XRDs définissent l'API de la plateforme et sont gérés centralement
+          par l'équipe plateforme.
+          
+          Si vous avez besoin d'un nouveau type de ressource :
+          1. Créez une demande : https://jira.engie.com/create-xrd
+          2. Justifiez le besoin business
+          3. L'équipe plateforme évaluera et créera le XRD si approuvé
+          
+          XRDs disponibles :
+          - xbuckets.s3.aws.engie.org (Buckets S3)
+        deny: {}
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-approved-compositions-only
+  annotations:
+    policies.kyverno.io/title: Enforce Approved Compositions Only
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: BucketClaim
+    policies.kyverno.io/description: >-
+      Force l'utilisation de compositions approuvées dans les BucketClaims.
+      Empêche l'utilisation de compositions non validées.
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+    - name: require-approved-composition
+      match:
+        any:
+          - resources:
+              kinds:
+                - BucketClaim
+              apiGroups:
+                - s3.aws.engie.org
+      validate:
+        message: |
+          ❌ COMPOSITION NON APPROUVÉE : Cette composition n'est pas autorisée.
+          
+          Compositions approuvées :
+          - s3bucket-secure (recommandé - avec toutes les protections)
+          - s3bucket-default (legacy - non recommandé)
+          
+          Votre claim utilise : {{ request.object.spec.compositionRef.name }}
+          
+          Action requise : Utilisez une composition approuvée :
+            spec:
+              compositionRef:
+                name: s3bucket-secure
+        pattern:
+          spec:
+            compositionRef:
+              name: "s3bucket-secure | s3bucket-default"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-namespace-crossplane-resources
+  annotations:
+    policies.kyverno.io/title: Block Crossplane Resources Outside Authorized Namespaces
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Bucket, BucketClaim
+    policies.kyverno.io/description: >-
+      Empêche la création de ressources Crossplane en dehors des namespaces autorisés.
+spec:
+  validationFailureAction: enforce
+  background: false
+  rules:
+    - name: restrict-crossplane-resources-namespace
+      match:
+        any:
+          - resources:
+              kinds:
+                - BucketClaim
+              apiGroups:
+                - s3.aws.engie.org
+              namespaces:
+                - "!crossplane-system"  # BucketClaims DOIVENT être dans crossplane-system
+      validate:
+        message: |
+          ❌ NAMESPACE NON AUTORISÉ : Les BucketClaims doivent être créés dans crossplane-system.
+          
+          Namespace actuel : {{ request.namespace }}
+          Namespace requis : crossplane-system
+          
+          Action requise : Créez votre BucketClaim dans le namespace crossplane-system :
+            kubectl apply -f my-claim.yaml -n crossplane-system
+        deny: {}
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: audit-composition-changes
+  annotations:
+    policies.kyverno.io/title: Audit All Composition Changes
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Composition
+    policies.kyverno.io/description: >-
+      Enregistre toutes les modifications de Compositions pour audit.
+spec:
+  validationFailureAction: audit  # Mode audit (ne bloque pas, juste log)
+  background: true
+  rules:
+    - name: audit-composition-modifications
+      match:
+        any:
+          - resources:
+              kinds:
+                - Composition
+              apiGroups:
+                - apiextensions.crossplane.io
+      validate:
+        message: |
+          ℹ️ AUDIT : Composition modifiée ou créée.
+          
+          Nom : {{ request.object.metadata.name }}
+          Utilisateur : {{ request.userInfo.username }}
+          Action : {{ request.operation }}
+          Timestamp : {{ time_now_utc() }}
+        deny:
+          conditions:
+            any:
+              # Cette condition est toujours fausse, donc ne bloque jamais
+              # Mais génère un événement d'audit
+              - key: "false"
+                operator: Equals
+                value: "true"
