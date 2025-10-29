@@ -25,10 +25,7 @@ spec:
                 - s3.aws.crossplane.io
       validate:
         message: |
-          ⚠️ AUDIT : Ce bucket devrait avoir une policy TLS 1.2.
-          
-          Policy attendue : s3:TlsVersion avec NumericLessThan 1.2
-          
+          ⚠️ AUDIT : Ce bucket devrait avoir une policy TLS 1.2 minimum
           Note : Cette vérification est informative. La policy est injectée par Crossplane.
         deny:
           conditions:
@@ -97,9 +94,6 @@ spec:
           Action requise : Ajoutez dans votre BucketClaim :
             spec:
               requireSSL: true
-          
-          Documentation : https://wiki.engie.com/s3-security-tls12
-          Support : #platform-engineering
         pattern:
           spec:
             requireSSL: true
@@ -123,9 +117,6 @@ spec:
           Action requise : Ajoutez dans votre BucketClaim :
             spec:
               encryption: true
-          
-          Documentation : https://wiki.engie.com/s3-security-encryption
-          Support : #platform-engineering
         pattern:
           spec:
             encryption: true
