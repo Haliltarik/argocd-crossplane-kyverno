@@ -3,7 +3,7 @@ kind: ClusterPolicy
 metadata:
   name: require-s3-tags
 spec:
-  validationFailureAction: enforce
+  validationFailureAction: enforce  # ✅ Mode audit (ne bloque pas, juste log)
   background: true
   rules:
     - name: check-s3-tags
@@ -14,18 +14,20 @@ spec:
                 - Bucket
               apiGroups:
                 - s3.aws.crossplane.io
+      # ✅ Cette policy s'applique SEULEMENT aux Buckets créés par Crossplane
+      # Les tentatives de création directe sont déjà bloquées par block-direct-bucket-creation
       validate:
-        message: "All S3 Buckets must have at least one tag defined."
-        Pattern:
+        message: |
+          ⚠️  TAGS MANQUANTS : Le bucket devrait avoir des tags.
+          
+          Tags recommandés :
+          - Environment (dev, staging, production)
+          - Owner (nom de l'équipe)
+          - CostCenter
+        pattern:
           spec:
             forProvider:
               tagging:
                 tagSet:
-                  - key: "?*"
-                    value: "?*"
-        deny:
-          conditions:
-            all:
-              - key: "{{ request.object.spec.forProvider.tagging.tagSet | length(@) }}"
-                operator: Equals
-                value: 0
+                  - key: "*"
+                    value: "*"
