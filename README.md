@@ -1,5 +1,5 @@
 
-# Démo : Garantir la Conformité des Buckets S3 avec Kyverno
+# Démo : Garantir la Conformité des Buckets S3 avec Crossplane/Kyverno
 
 ---
 
