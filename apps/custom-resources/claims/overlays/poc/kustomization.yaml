@@ -12,10 +12,10 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: test-crossplane-bucket-poc-xrd-407083967603-tamt
+        value: test-crossplane-bucket-secure-poc
       - op: replace
         path: /spec/bucketName
-        value: test-crossplane-bucket-poc-xrd-407083967603-tamt
+        value: test-crossplane-bucket-secure-poc
       - op: add
         path: /spec/compositionRef
         value:

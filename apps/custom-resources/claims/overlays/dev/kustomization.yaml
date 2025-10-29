@@ -12,10 +12,10 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: test-crossplane-bucket-dev-xrd-407083967603-tamt
+        value: test-crossplane-bucket-NotSecure-dev
       - op: replace
         path: /spec/bucketName
-        value: test-crossplane-bucket-dev-xrd-407083967603-tamt
+        value: test-crossplane-bucket-NotSecure-dev
       - op: add
         path: /spec/compositionRef
         value:
