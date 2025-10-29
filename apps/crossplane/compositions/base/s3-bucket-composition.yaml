@@ -9,7 +9,7 @@ spec:
   mode: Pipeline
   pipeline:
 
-    # STEP 1 : Create S3 Bucket
+    # STEP 1 : main bucket
     - step: s3bucket
       functionRef:
         name: crossplane-contrib-function-patch-and-transform
@@ -44,7 +44,7 @@ spec:
               - fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
 
-    # STEP 2 : Conditional SSL Bucket Policy
+    # STEP 2 : SSL POLICY (optional, based on requireSSL)
     - step: ssl-policy
       functionRef:
         name: crossplane-contrib-function-patch-and-transform
@@ -59,13 +59,13 @@ spec:
               spec:
                 forProvider:
                   bucketRef:
-                    name: "" # Patched
-                  policy: ""
+                    name: ""
+                  policy: "" # default empty
             patches:
               - fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.bucketRef.name"
               - type: FromCompositeFieldPath
-                fromFieldPath: "spec.bucketName"
+                fromFieldPath: "spec.requireSSL"
                 toFieldPath: "spec.forProvider.policy"
                 transforms:
                   - type: string
@@ -75,33 +75,3 @@ spec:
                       fmtArgs:
                         - fromFieldPath: "spec.bucketName"
                         - fromFieldPath: "spec.bucketName"
-            conditions:
-              - type: FromCompositeFieldPath
-                fromFieldPath: "spec.requireSSL"
-                toFieldPath: "ready"
-
-    # STEP 3 : Optional Encryption SSE-S3
-    - step: encryption
-      functionRef:
-        name: crossplane-contrib-function-patch-and-transform
-      input:
-        apiVersion: v1
-        kind: PatchSet
-        resources:
-          - name: encryption
-            base:
-              apiVersion: s3.aws.crossplane.io/v1beta1
-              kind: Bucket
-              spec:
-                forProvider:
-                  serverSideEncryptionConfiguration:
-                    - rules:
-                        - applyServerSideEncryptionByDefault:
-                            sseAlgorithm: AES256
-            patches:
-              - fromFieldPath: "spec.bucketName"
-                toFieldPath: "metadata.name"
-            conditions:
-              - type: FromCompositeFieldPath
-                fromFieldPath: "spec.encryption"
-                toFieldPath: "ready"
