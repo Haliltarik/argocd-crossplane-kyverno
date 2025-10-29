@@ -29,8 +29,6 @@ spec:
                     status: Enabled
                   tagging:
                     tagSet: []
-                  # PAS de serverSideEncryptionConfiguration
-                  # PAS de publicAccessBlockConfiguration
                 providerConfigRef:
                   name: default
                 deletionPolicy: Delete
@@ -46,4 +44,3 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
-              # PAS de policy SSL ici

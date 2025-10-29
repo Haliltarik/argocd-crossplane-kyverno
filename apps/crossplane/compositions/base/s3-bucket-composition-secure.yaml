@@ -11,13 +11,14 @@ spec:
     kind: XBucket
   mode: Pipeline
   pipeline:
-    - step: s3bucket
+    - step: s3bucket-and-policy
       functionRef:
         name: crossplane-contrib-function-patch-and-transform
       input:
         apiVersion: pt.fn.crossplane.io/v1beta1
         kind: Resources
         resources:
+          # Ressource 1: Le Bucket S3
           - name: s3bucket
             base:
               apiVersion: s3.aws.crossplane.io/v1beta1
@@ -53,13 +54,60 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
-              
-              # Policy SSL (JSON en une seule ligne)
+          
+          # Ressource 2: La BucketPolicy SSL (v1alpha3)
+          - name: bucketpolicy-ssl
+            base:
+              apiVersion: s3.aws.crossplane.io/v1alpha3
+              kind: BucketPolicy
+              spec:
+                forProvider:
+                  bucketNameSelector:
+                    matchControllerRef: true
+                  policy:
+                    version: "2012-10-17"
+                    statements:
+                      - sid: DenyInsecureTransport
+                        effect: Deny
+                        principal:
+                          allowAnon: true
+                        action:
+                          - "s3:*"
+                        resource: []  # sera patché
+                        condition:
+                          - operatorKey: Bool
+                            conditions:
+                              - key: "aws:SecureTransport"
+                                boolValue: false
+                providerConfigRef:
+                  name: default
+                deletionPolicy: Delete
+            patches:
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.bucketName"
-                toFieldPath: "spec.forProvider.policy"
+                toFieldPath: "metadata.name"
                 transforms:
                   - type: string
                     string:
                       type: Format
-                      fmt: '{"Version":"2012-10-17","Statement":[{"Sid":"DenyInsecureTransport","Effect":"Deny","Principal":"*","Action":"s3:*","Resource":["arn:aws:s3:::%s","arn:aws:s3:::%s/*"],"Condition":{"Bool":{"aws:SecureTransport":"false"}}}]}'
+                      fmt: "%s-ssl-policy"
+              
+              # Patch le ARN du bucket dans resource[0]
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.policy.statements[0].resource[0]"
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "arn:aws:s3:::%s"
+              
+              # Patch le ARN du bucket dans resource[1]
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.policy.statements[0].resource[1]"
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: "arn:aws:s3:::%s/*"
