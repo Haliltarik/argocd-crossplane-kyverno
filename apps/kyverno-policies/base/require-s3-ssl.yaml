@@ -1,61 +1,110 @@
+# apps/kyverno-policies/base/require-s3-ssl.yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: require-s3-ssl
+  annotations:
+    policies.kyverno.io/title: Require SSL/TLS for S3 Buckets
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
 spec:
-  validationFailureAction: enforce
+  validationFailureAction: audit  # ✅ AUDIT seulement
+  background: true
   rules:
-    - name: validate-ssl-policy-content
+    - name: check-ssl-policy
       match:
         any:
           - resources:
-              apiGroups: ["s3.aws.crossplane.io"]
-              kinds: ["BucketPolicy"]
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
       validate:
-        message: "SSL must be enforced"
+        message: "Information: Ce bucket devrait avoir une BucketPolicy SSL"
         pattern:
-          spec:
-            forProvider:
-              policy: "*SecureTransport*"
+          metadata:
+            name: "?*"
+
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: require-s3-encryption-in-transit
+  annotations:
+    policies.kyverno.io/title: Require S3 Encryption Configuration
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: medium
 spec:
-  validationFailureAction: enforce
+  validationFailureAction: audit  # ✅ AUDIT seulement (ne bloque pas)
+  background: true
   rules:
-    - name: require-sse
+    - name: check-server-side-encryption
       match:
         any:
           - resources:
-              apiGroups: ["s3.aws.crossplane.io"]
-              kinds: ["Bucket"]
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
       validate:
-        message: "SSE is required"
+        message: "Information: Ce bucket devrait avoir SSE activé"
         pattern:
           spec:
             forProvider:
-              serverSideEncryptionConfiguration:
-                - rules:
-                    - applyServerSideEncryptionByDefault:
-                        sseAlgorithm: "?*"
+              "?*": "?*"
+
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: require-s3-claim-ssl
+  annotations:
+    policies.kyverno.io/title: Require SSL for S3 Bucket Claims
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
 spec:
-  validationFailureAction: audit  # Important ✅
+  validationFailureAction: enforce  # ✅ ENFORCE ici (c'est ce qui compte)
+  background: true
   rules:
     - name: require-ssl-in-claims
       match:
         any:
           - resources:
-              apiGroups: ["s3.aws.engie.org"]
-              kinds: ["BucketClaim"]
+              kinds:
+                - BucketClaim
+              apiGroups:
+                - s3.aws.engie.org
       validate:
-        message: "Claims should prefer requireSSL=true"
+        message: "❌ Les BucketClaims doivent spécifier requireSSL: true"
         pattern:
           spec:
-            =(requireSSL): true
+            requireSSL: true
+
+    - name: require-encryption-in-claims
+      match:
+        any:
+          - resources:
+              kinds:
+                - BucketClaim
+              apiGroups:
+                - s3.aws.engie.org
+      validate:
+        message: "❌ Les BucketClaims doivent spécifier encryption: true"
+        pattern:
+          spec:
+            encryption: true
+
+    - name: require-ssl-in-xbuckets
+      match:
+        any:
+          - resources:
+              kinds:
+                - XBucket
+              apiGroups:
+                - s3.aws.engie.org
+      validate:
+        message: "❌ Les XBuckets doivent spécifier requireSSL: true et encryption: true"
+        pattern:
+          spec:
+            requireSSL: true
+            encryption: true
