@@ -1,3 +1,4 @@
+# apps/custom-resources/claims/overlays/dev/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -16,17 +17,19 @@ patches:
         path: /spec/bucketName
         value: test-crossplane-bucket-dev-xrd-407083967603-tamt
       - op: add
-        path: /spec/tags
+        path: /spec/compositionRef
         value:
-          - key: Environment
-            value: dev
-          - key: Owner
-            value: fac
-          - key: Application
-            value: Crossplane
+          name: s3bucket-default
       - op: add
         path: /spec/requireSSL
         value: false
       - op: add
         path: /spec/encryption
         value: false
+      - op: replace
+        path: /spec/tags
+        value:
+          - key: Environment
+            value: dev
+          - key: Owner
+            value: fac

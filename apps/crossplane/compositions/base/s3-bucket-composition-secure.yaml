@@ -1,10 +1,10 @@
-# apps/crossplane/compositions/base/s3-bucket-composition-default.yaml
+# apps/crossplane/compositions/base/s3-bucket-composition-secure.yaml
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: s3bucket-default
+  name: s3bucket-secure
   labels:
-    security: disabled
+    security: enabled
 spec:
   compositeTypeRef:
     apiVersion: s3.aws.engie.org/v1alpha1
@@ -29,8 +29,15 @@ spec:
                     status: Enabled
                   tagging:
                     tagSet: []
-                  # PAS de serverSideEncryptionConfiguration
-                  # PAS de publicAccessBlockConfiguration
+                  serverSideEncryptionConfiguration:
+                    rules:
+                      - applyServerSideEncryptionByDefault:
+                          sseAlgorithm: AES256
+                  publicAccessBlockConfiguration:
+                    blockPublicAcls: true
+                    blockPublicPolicy: true
+                    ignorePublicAcls: true
+                    restrictPublicBuckets: true
                 providerConfigRef:
                   name: default
                 deletionPolicy: Delete
@@ -46,4 +53,13 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
-              # PAS de policy SSL ici
+              
+              # Policy SSL (JSON en une seule ligne)
+              - type: FromCompositeFieldPath
+                fromFieldPath: "spec.bucketName"
+                toFieldPath: "spec.forProvider.policy"
+                transforms:
+                  - type: string
+                    string:
+                      type: Format
+                      fmt: '{"Version":"2012-10-17","Statement":[{"Sid":"DenyInsecureTransport","Effect":"Deny","Principal":"*","Action":"s3:*","Resource":["arn:aws:s3:::%s","arn:aws:s3:::%s/*"],"Condition":{"Bool":{"aws:SecureTransport":"false"}}}]}'
