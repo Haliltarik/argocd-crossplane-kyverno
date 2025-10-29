@@ -2,16 +2,20 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: require-s3-ssl
+  name: audit-s3-bucket-security
   annotations:
-    policies.kyverno.io/title: Require SSL/TLS for S3 Buckets
+    policies.kyverno.io/title: Audit S3 Bucket Security Policies
     policies.kyverno.io/category: Security
     policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Bucket
+    policies.kyverno.io/description: >-
+      Audit que les buckets S3 ont bien les policies de sécurité TLS 1.2 + HTTPS.
+      Cette policy NE MODIFIE PAS les buckets, elle vérifie seulement.
 spec:
-  validationFailureAction: audit  # ✅ AUDIT seulement
+  validationFailureAction: audit  # ✅ AUDIT seulement (pas de blocage)
   background: true
   rules:
-    - name: check-ssl-policy
+    - name: check-tls-12-policy-present
       match:
         any:
           - resources:
@@ -20,25 +24,21 @@ spec:
               apiGroups:
                 - s3.aws.crossplane.io
       validate:
-        message: "Information: Ce bucket devrait avoir une BucketPolicy SSL"
-        pattern:
-          metadata:
-            name: "?*"
+        message: |
+          ⚠️ AUDIT : Ce bucket devrait avoir une policy TLS 1.2.
+          
+          Policy attendue : s3:TlsVersion avec NumericLessThan 1.2
+          
+          Note : Cette vérification est informative. La policy est injectée par Crossplane.
+        deny:
+          conditions:
+            any:
+              # Vérifie la présence de s3:TlsVersion dans la policy
+              - key: "{{ contains(to_string(request.object.spec.forProvider.policy), 's3:TlsVersion') }}"
+                operator: Equals
+                value: false
 
----
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: require-s3-encryption-in-transit
-  annotations:
-    policies.kyverno.io/title: Require S3 Encryption Configuration
-    policies.kyverno.io/category: Security
-    policies.kyverno.io/severity: medium
-spec:
-  validationFailureAction: audit  # ✅ AUDIT seulement (ne bloque pas)
-  background: true
-  rules:
-    - name: check-server-side-encryption
+    - name: check-https-policy-present
       match:
         any:
           - resources:
@@ -47,23 +47,35 @@ spec:
               apiGroups:
                 - s3.aws.crossplane.io
       validate:
-        message: "Information: Ce bucket devrait avoir SSE activé"
-        pattern:
-          spec:
-            forProvider:
-              "?*": "?*"
+        message: |
+          ⚠️ AUDIT : Ce bucket devrait avoir une policy HTTPS.
+          
+          Policy attendue : aws:SecureTransport = false avec Effect Deny
+          
+          Note : Cette vérification est informative. La policy est injectée par Crossplane.
+        deny:
+          conditions:
+            any:
+              # Vérifie la présence de aws:SecureTransport dans la policy
+              - key: "{{ contains(to_string(request.object.spec.forProvider.policy), 'aws:SecureTransport') }}"
+                operator: Equals
+                value: false
 
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: require-s3-claim-ssl
+  name: enforce-s3-claim-requirements
   annotations:
-    policies.kyverno.io/title: Require SSL for S3 Bucket Claims
+    policies.kyverno.io/title: Enforce S3 BucketClaim Requirements
     policies.kyverno.io/category: Security
     policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: BucketClaim, XBucket
+    policies.kyverno.io/description: >-
+      BLOQUE les BucketClaims qui ne spécifient pas requireSSL et encryption.
+      Les buckets seront ensuite créés par Crossplane avec les bonnes policies.
 spec:
-  validationFailureAction: enforce  # ✅ ENFORCE ici (c'est ce qui compte)
+  validationFailureAction: enforce  # ✅ ENFORCE sur les claims (bloque)
   background: true
   rules:
     - name: require-ssl-in-claims
@@ -75,7 +87,19 @@ spec:
               apiGroups:
                 - s3.aws.engie.org
       validate:
-        message: "❌ Les BucketClaims doivent spécifier requireSSL: true"
+        message: |
+          ❌ SÉCURITÉ OBLIGATOIRE : requireSSL doit être activé.
+          
+          Ce paramètre garantit que Crossplane créera le bucket avec :
+          - Policy HTTPS obligatoire (aws:SecureTransport)
+          - Policy TLS 1.2 minimum (s3:TlsVersion >= 1.2)
+          
+          Action requise : Ajoutez dans votre BucketClaim :
+            spec:
+              requireSSL: true
+          
+          Documentation : https://wiki.engie.com/s3-security-tls12
+          Support : #platform-engineering
         pattern:
           spec:
             requireSSL: true
@@ -89,7 +113,19 @@ spec:
               apiGroups:
                 - s3.aws.engie.org
       validate:
-        message: "❌ Les BucketClaims doivent spécifier encryption: true"
+        message: |
+          ❌ CHIFFREMENT OBLIGATOIRE : encryption doit être activé.
+          
+          Ce paramètre garantit que Crossplane créera le bucket avec :
+          - Chiffrement AES-256 au repos
+          - Blocage de l'accès public
+          
+          Action requise : Ajoutez dans votre BucketClaim :
+            spec:
+              encryption: true
+          
+          Documentation : https://wiki.engie.com/s3-security-encryption
+          Support : #platform-engineering
         pattern:
           spec:
             encryption: true
@@ -103,8 +139,66 @@ spec:
               apiGroups:
                 - s3.aws.engie.org
       validate:
-        message: "❌ Les XBuckets doivent spécifier requireSSL: true et encryption: true"
+        message: |
+          ❌ SÉCURITÉ OBLIGATOIRE : Le XBucket doit avoir requireSSL et encryption.
         pattern:
           spec:
             requireSSL: true
             encryption: true
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-s3-encryption-config
+  annotations:
+    policies.kyverno.io/title: Enforce S3 Encryption Configuration
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Bucket
+spec:
+  validationFailureAction: enforce  # ✅ ENFORCE (bloque si pas conforme)
+  background: true
+  rules:
+    - name: require-server-side-encryption
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      validate:
+        message: |
+          ❌ CHIFFREMENT MANQUANT : Le bucket doit avoir serverSideEncryptionConfiguration.
+          
+          Cette configuration doit être injectée par la composition Crossplane.
+        pattern:
+          spec:
+            forProvider:
+              serverSideEncryptionConfiguration:
+                rules:
+                  - applyServerSideEncryptionByDefault:
+                      sseAlgorithm: "AES256 | aws:kms"
+
+    - name: require-public-access-block
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      validate:
+        message: |
+          ❌ ACCÈS PUBLIC NON BLOQUÉ : Le bucket doit avoir publicAccessBlockConfiguration.
+          
+          Cette configuration doit être injectée par la composition Crossplane.
+        pattern:
+          spec:
+            forProvider:
+              publicAccessBlockConfiguration:
+                blockPublicAcls: true
+                blockPublicPolicy: true
+                ignorePublicAcls: true
+                restrictPublicBuckets: true
