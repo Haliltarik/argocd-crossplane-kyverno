@@ -9,7 +9,7 @@ spec:
   mode: Pipeline
   pipeline:
 
-    # STEP 1 : main bucket
+    # STEP 1 : Create S3 Bucket
     - step: s3bucket
       functionRef:
         name: crossplane-contrib-function-patch-and-transform
@@ -44,7 +44,7 @@ spec:
               - fromFieldPath: "spec.tags"
                 toFieldPath: "spec.forProvider.tagging.tagSet"
 
-    # STEP 2 : SSL POLICY (optional, based on requireSSL)
+    # STEP 2 : SSL POLICY (enabled only if requireSSL=true)
     - step: ssl-policy
       functionRef:
         name: crossplane-contrib-function-patch-and-transform
@@ -60,18 +60,15 @@ spec:
                 forProvider:
                   bucketRef:
                     name: ""
-                  policy: "" # default empty
+                  policy: "" # default --> no SSL enforcement
             patches:
               - fromFieldPath: "spec.bucketName"
                 toFieldPath: "spec.forProvider.bucketRef.name"
-              - type: FromCompositeFieldPath
-                fromFieldPath: "spec.requireSSL"
+              - fromFieldPath: "spec.requireSSL"
                 toFieldPath: "spec.forProvider.policy"
                 transforms:
-                  - type: string
-                    string:
-                      fmt: |
-                        {"Version":"2012-10-17","Statement":[{"Sid":"DenyUnencrypted","Effect":"Deny","Principal":"*","Action":"s3:*","Resource":["arn:aws:s3:::%s","arn:aws:s3:::%s/*"],"Condition":{"Bool":{"aws:SecureTransport":"false"}}}]}
-                      fmtArgs:
-                        - fromFieldPath: "spec.bucketName"
-                        - fromFieldPath: "spec.bucketName"
+                  - type: map
+                    map:
+                      "true": |
+                        {"Version":"2012-10-17","Statement":[{"Sid":"DenyUnencrypted","Effect":"Deny","Principal":"*","Action":"s3:*","Resource":["arn:aws:s3:::${bucketName}","arn:aws:s3:::${bucketName}/*"],"Condition":{"Bool":{"aws:SecureTransport":"false"}}}]}
+                      "false": ""
