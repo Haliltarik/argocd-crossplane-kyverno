@@ -12,10 +12,10 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: test-crossplane-bucket-notsecure-dev
+        value: dev-test-bucket-notsecure
       - op: replace
         path: /spec/bucketName
-        value: test-crossplane-bucket-notsecure-dev
+        value: dev-test-bucket-notsecure
       - op: add
         path: /spec/compositionRef
         value:
