@@ -1,10 +1,6 @@
 
 # Démo : Garantir la Conformité des Buckets S3 avec Crossplane/Kyverno
 ---
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                    CONFORMITÉ DES BUCKETS S3 AVEC Crossplance/KYVERNO        │
-└──────────────────────────────────────────────────────────────────────────────┘
-
 
          👨‍💻 DÉVELOPPEUR                    👨‍💻 DÉVELOPPEUR
               │                                  │
