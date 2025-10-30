@@ -271,7 +271,7 @@ metadata:
       Records all Composition modifications for audit purposes.
 spec:
   validationFailureAction: audit  # Audit mode (doesn't block, just logs)
-  background: true
+  background: false
   rules:
     - name: audit-composition-modifications
       match:
