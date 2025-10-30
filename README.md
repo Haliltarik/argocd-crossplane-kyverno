@@ -57,23 +57,6 @@ graph TB
     style AWS fill:#FF9900,stroke:#CC7A00,stroke-width:3px
 ```
 
-### Résultats
-
-| Avant (Réactif) | Après (Proactif) |
-|-----------------|------------------|
-| 60-70% conformité | ✅ 100% conformité |
-| 3 mois exposition risque | ✅ 0 sec exposition risque |
-| 2-5 incidents/trimestre | ✅ 0 incident |
-| 40% temps équipe sécu | ✅ 10% temps équipe sécu |
-
-### Messages Clés
-
-- ✅ **Conformité garantie** : Validation AVANT création
-- ❌ **Non-conformité impossible** : Blocage automatique
-- 🛡️ **3 niveaux de protection** : Validation + Blocage + Whitelist
-- 📊 **100% auditable** : Tout versionné dans Git
-- 🚀 **Self-service sécurisé** : Développeurs autonomes
-- ⚡ **Feedback immédiat** : < 1 seconde
 
 # Tests de Validation
 
