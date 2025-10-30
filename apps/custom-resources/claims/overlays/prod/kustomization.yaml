@@ -11,10 +11,26 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: test-crossplane-bucket-prod-xrd-407083967603-tamt
+        value: test-crossplane-bucket-secure-prod
       - op: replace
         path: /spec/bucketName
-        value: test-crossplane-bucket-prod-xrd-407083967603-tamt
+        value: test-crossplane-bucket-secure-prod
+      - op: add
+        path: /spec/compositionRef
+        value:
+          name: s3bucket-secure
+      - op: add
+        path: /spec/requireSSL
+        value: true
+      - op: add
+        path: /spec/encryption
+        value: true
       - op: replace
         path: /spec/tags
-        value: []
+        value: 
+          - key: Environment
+            value: prod
+          - key: Owner
+            value: fac
+          - key: Project
+            value: demo

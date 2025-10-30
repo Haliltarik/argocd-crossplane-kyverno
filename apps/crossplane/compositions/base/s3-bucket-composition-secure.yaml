@@ -31,7 +31,7 @@ spec:
                   versioningConfiguration:
                     status: Enabled
                   
-                  # ✅ Désactiver Website Hosting (ENGIE-AWS-S3-WebsiteHosting) - NOUVEAU
+                  # ✅ Désactiver Website Hosting (ENGIE-AWS-S3-WebsiteHosting)
                   # On ne spécifie pas websiteConfiguration = désactivé par défaut
                   
                   tagging:
@@ -82,7 +82,7 @@ spec:
                               - key: "aws:SecureTransport"
                                 stringValue: "false"
                       
-                      # Statement 3 : Forcer header encryption (ENGIE-AWS-S3-EncryptionHeader) - NOUVEAU
+                      # Statement 3 : Forcer header encryption (ENGIE-AWS-S3-EncryptionHeader) 
                       - sid: deny-unencrypted-object-uploads
                         effect: Deny
                         principal:
