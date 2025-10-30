@@ -2,8 +2,16 @@ apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: require-s3-tags
+  annotations:
+    policies.kyverno.io/title: Require S3 Bucket Tags
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Bucket
+    policies.kyverno.io/description: >-
+      Ensures that S3 buckets have required tags for cost allocation,
+      ownership tracking, and resource management.
 spec:
-  validationFailureAction: enforce  # ✅ Mode audit (ne bloque pas, juste log)
+  validationFailureAction: enforce  # ✅ Enforce mode (blocks creation)
   background: true
   rules:
     - name: check-s3-tags
@@ -14,16 +22,32 @@ spec:
                 - Bucket
               apiGroups:
                 - s3.aws.crossplane.io
-      # ✅ Cette policy s'applique SEULEMENT aux Buckets créés par Crossplane
-      # Les tentatives de création directe sont déjà bloquées par block-direct-bucket-creation
+      # ✅ This policy applies ONLY to Buckets created by Crossplane
+      # Direct creation attempts are already blocked by block-direct-bucket-creation
       validate:
         message: |
-          ⚠️  TAGS MANQUANTS : Le bucket devrait avoir des tags.
+          ⚠️  TAGS MISSING: The bucket must have tags.
           
-          Tags recommandés :
+          Recommended tags:
           - Environment (dev, staging, production)
-          - Owner (nom de l'équipe)
+          - Owner (team name)
           - CostCenter
+          - ApplicationId
+          
+          Required action: Add tags to your BucketClaim:
+            spec:
+              tags:
+                - key: Environment
+                  value: production
+                - key: Owner
+                  value: platform-team
+                - key: CostCenter
+                  value: CC-12345
+                - key: ApplicationId
+                  value: app-67890
+          
+          Documentation: https://wiki.engie.com/s3-tagging-policy
+          Support: #platform-engineering
         pattern:
           spec:
             forProvider:

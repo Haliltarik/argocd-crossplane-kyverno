@@ -9,10 +9,10 @@ metadata:
     policies.kyverno.io/severity: high
     policies.kyverno.io/subject: Bucket
     policies.kyverno.io/description: >-
-      Audit que les buckets S3 ont bien les policies de sécurité TLS 1.2 + HTTPS.
-      Cette policy NE MODIFIE PAS les buckets, elle vérifie seulement.
+      Audits that S3 buckets have the required TLS 1.2 + HTTPS security policies.
+      This policy DOES NOT MODIFY buckets, it only validates them.
 spec:
-  validationFailureAction: audit  # ✅ AUDIT seulement (pas de blocage)
+  validationFailureAction: audit  # ✅ AUDIT only (no blocking)
   background: true
   rules:
     - name: check-tls-12-policy-present
@@ -25,12 +25,13 @@ spec:
                 - s3.aws.crossplane.io
       validate:
         message: |
-          ⚠️ AUDIT : Ce bucket devrait avoir une policy TLS 1.2 minimum
-          Note : Cette vérification est informative. La policy est injectée par Crossplane.
+          ⚠️ AUDIT: This bucket should have a TLS 1.2 minimum policy.
+          
+          Note: This is an informational check. The policy is injected by Crossplane.
         deny:
           conditions:
             any:
-              # Vérifie la présence de s3:TlsVersion dans la policy
+              # Check for s3:TlsVersion in the policy
               - key: "{{ contains(to_string(request.object.spec.forProvider.policy), 's3:TlsVersion') }}"
                 operator: Equals
                 value: false
@@ -45,15 +46,15 @@ spec:
                 - s3.aws.crossplane.io
       validate:
         message: |
-          ⚠️ AUDIT : Ce bucket devrait avoir une policy HTTPS.
+          ⚠️ AUDIT: This bucket should have an HTTPS policy.
           
-          Policy attendue : aws:SecureTransport = false avec Effect Deny
+          Expected policy: aws:SecureTransport = false with Effect Deny
           
-          Note : Cette vérification est informative. La policy est injectée par Crossplane.
+          Note: This is an informational check. The policy is injected by Crossplane.
         deny:
           conditions:
             any:
-              # Vérifie la présence de aws:SecureTransport dans la policy
+              # Check for aws:SecureTransport in the policy
               - key: "{{ contains(to_string(request.object.spec.forProvider.policy), 'aws:SecureTransport') }}"
                 operator: Equals
                 value: false
@@ -69,10 +70,10 @@ metadata:
     policies.kyverno.io/severity: high
     policies.kyverno.io/subject: BucketClaim, XBucket
     policies.kyverno.io/description: >-
-      BLOQUE les BucketClaims qui ne spécifient pas requireSSL et encryption.
-      Les buckets seront ensuite créés par Crossplane avec les bonnes policies.
+      BLOCKS BucketClaims that do not specify requireSSL and encryption.
+      Buckets will then be created by Crossplane with the proper policies.
 spec:
-  validationFailureAction: enforce  # ✅ ENFORCE sur les claims (bloque)
+  validationFailureAction: enforce  # ✅ ENFORCE on claims (blocks)
   background: true
   rules:
     - name: require-ssl-in-claims
@@ -85,15 +86,18 @@ spec:
                 - s3.aws.engie.org
       validate:
         message: |
-          ❌ SÉCURITÉ OBLIGATOIRE : requireSSL doit être activé.
+          ❌ SECURITY REQUIRED: requireSSL must be enabled.
           
-          Ce paramètre garantit que Crossplane créera le bucket avec :
-          - Policy HTTPS obligatoire (aws:SecureTransport)
-          - Policy TLS 1.2 minimum (s3:TlsVersion >= 1.2)
+          This parameter ensures that Crossplane will create the bucket with:
+          - HTTPS mandatory policy (aws:SecureTransport)
+          - TLS 1.2 minimum policy (s3:TlsVersion >= 1.2)
           
-          Action requise : Ajoutez dans votre BucketClaim :
+          Required action: Add to your BucketClaim:
             spec:
               requireSSL: true
+          
+          Documentation: https://wiki.engie.com/s3-security-tls12
+          Support: #platform-engineering
         pattern:
           spec:
             requireSSL: true
@@ -108,15 +112,18 @@ spec:
                 - s3.aws.engie.org
       validate:
         message: |
-          ❌ CHIFFREMENT OBLIGATOIRE : encryption doit être activé.
+          ❌ ENCRYPTION REQUIRED: encryption must be enabled.
           
-          Ce paramètre garantit que Crossplane créera le bucket avec :
-          - Chiffrement AES-256 au repos
-          - Blocage de l'accès public
+          This parameter ensures that Crossplane will create the bucket with:
+          - AES-256 encryption at rest
+          - Public access blocked
           
-          Action requise : Ajoutez dans votre BucketClaim :
+          Required action: Add to your BucketClaim:
             spec:
               encryption: true
+          
+          Documentation: https://wiki.engie.com/s3-security-encryption
+          Support: #platform-engineering
         pattern:
           spec:
             encryption: true
@@ -131,7 +138,7 @@ spec:
                 - s3.aws.engie.org
       validate:
         message: |
-          ❌ SÉCURITÉ OBLIGATOIRE : Le XBucket doit avoir requireSSL et encryption.
+          ❌ SECURITY REQUIRED: XBucket must have requireSSL and encryption enabled.
         pattern:
           spec:
             requireSSL: true
@@ -148,7 +155,7 @@ metadata:
     policies.kyverno.io/severity: high
     policies.kyverno.io/subject: Bucket
 spec:
-  validationFailureAction: enforce  # ✅ ENFORCE (bloque si pas conforme)
+  validationFailureAction: enforce  # ✅ ENFORCE (blocks if non-compliant)
   background: true
   rules:
     - name: require-server-side-encryption
@@ -161,9 +168,9 @@ spec:
                 - s3.aws.crossplane.io
       validate:
         message: |
-          ❌ CHIFFREMENT MANQUANT : Le bucket doit avoir serverSideEncryptionConfiguration.
+          ❌ ENCRYPTION MISSING: Bucket must have serverSideEncryptionConfiguration.
           
-          Cette configuration doit être injectée par la composition Crossplane.
+          This configuration must be injected by the Crossplane composition.
         pattern:
           spec:
             forProvider:
@@ -182,9 +189,9 @@ spec:
                 - s3.aws.crossplane.io
       validate:
         message: |
-          ❌ ACCÈS PUBLIC NON BLOQUÉ : Le bucket doit avoir publicAccessBlockConfiguration.
+          ❌ PUBLIC ACCESS NOT BLOCKED: Bucket must have publicAccessBlockConfiguration.
           
-          Cette configuration doit être injectée par la composition Crossplane.
+          This configuration must be injected by the Crossplane composition.
         pattern:
           spec:
             forProvider:
