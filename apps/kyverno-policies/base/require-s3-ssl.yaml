@@ -93,8 +93,9 @@ spec:
           - TLS 1.2 minimum policy (s3:TlsVersion >= 1.2)
           
           Required action: Add to your BucketClaim:
-            spec:
-              requireSSL: true
+                  - op: add
+                    path: /spec/requireSSL
+                    value: true          
           
           Documentation: https://wiki.engie.com/s3-security-tls12
           Support: #platform-engineering
@@ -119,8 +120,9 @@ spec:
           - Public access blocked
           
           Required action: Add to your BucketClaim:
-            spec:
-              encryption: true
+                  - op: add
+                    path: /spec/encryption
+                    value: true
           
           Documentation: https://wiki.engie.com/s3-security-encryption
           Support: #platform-engineering
