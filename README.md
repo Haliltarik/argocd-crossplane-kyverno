@@ -1,5 +1,5 @@
 
-## Architecture de la Démo: Garantir la coformotié des buckets S3 avec Crossplane/Kyverno
+## Architecture de la Démo: Garantir la conformotié des buckets S3 avec Crossplane/Kyverno
 
 ### Vue d'Ensemble
 
