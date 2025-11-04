@@ -4,58 +4,58 @@
 # by creating their own Compositions, XRDs, or directly creating AWS Buckets
 
 ---
-# apiVersion: kyverno.io/v1
-# kind: ClusterPolicy
-# metadata:
-#   name: block-direct-bucket-creation
-#   annotations:
-#     policies.kyverno.io/title: Block Direct AWS Bucket Creation
-#     policies.kyverno.io/category: Security
-#     policies.kyverno.io/severity: critical
-#     policies.kyverno.io/subject: Bucket
-#     policies.kyverno.io/description: >-
-#       Prevents developers from directly creating AWS Buckets without going
-#       through approved BucketClaims. Only Crossplane can create Buckets.
-# spec:
-#   validationFailureAction: enforce
-#   background: false
-#   rules:
-#     - name: deny-direct-bucket-creation-by-users
-#       match:
-#         any:
-#           - resources:
-#               kinds:
-#                 - Bucket
-#               apiGroups:
-#                 - s3.aws.crossplane.io
-#       exclude:
-#         any:
-#           # ✅ Allow only Crossplane ServiceAccounts
-#           - subjects:
-#               - kind: ServiceAccount
-#                 name: crossplane
-#                 namespace: crossplane-system
-#           - subjects:
-#               - kind: ServiceAccount
-#                 name: crossplane-*
-#                 namespace: crossplane-system
-#       validate:
-#         message: |
-#           ❌ ACCESS DENIED: Direct creation of S3 Buckets is not allowed.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-direct-bucket-creation
+  annotations:
+    policies.kyverno.io/title: Block Direct AWS Bucket Creation
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Bucket
+    policies.kyverno.io/description: >-
+      Prevents developers from directly creating AWS Buckets without going
+      through approved BucketClaims. Only Crossplane can create Buckets.
+spec:
+  validationFailureAction: enforce
+  background: false
+  rules:
+    - name: deny-direct-bucket-creation-by-users
+      match:
+        any:
+          - resources:
+              kinds:
+                - Bucket
+              apiGroups:
+                - s3.aws.crossplane.io
+      exclude:
+        any:
+          # ✅ Allow only Crossplane ServiceAccounts
+          - subjects:
+              - kind: ServiceAccount
+                name: crossplane
+                namespace: crossplane-system
+          - subjects:
+              - kind: ServiceAccount
+                name: crossplane-*
+                namespace: crossplane-system
+      validate:
+        message: |
+          ❌ ACCESS DENIED: Direct creation of S3 Buckets is not allowed.
           
-#           AWS Buckets must be created via BucketClaims to ensure
-#           enforcement of ENGIE security policies.
+          AWS Buckets must be created via BucketClaims to ensure
+          enforcement of ENGIE security policies.
           
-#           Required action: Create a BucketClaim instead of a Bucket:
-#             apiVersion: s3.aws.engie.org/v1alpha1
-#             kind: BucketClaim
-#             spec:
-#               requireSSL: true
-#               encryption: true
+          Required action: Create a BucketClaim instead of a Bucket:
+            apiVersion: s3.aws.engie.org/v1alpha1
+            kind: BucketClaim
+            spec:
+              requireSSL: true
+              encryption: true
           
-#           Documentation: https://wiki.engie.com/s3-bucket-creation
-#           Support: #platform-engineering
-#         deny: {}
+          Documentation: https://wiki.engie.com/s3-bucket-creation
+          Support: #platform-engineering
+        deny: {}
 
 ---
 apiVersion: kyverno.io/v1
