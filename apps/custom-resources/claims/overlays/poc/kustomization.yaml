@@ -12,10 +12,10 @@ patches:
     patch: |-
       - op: replace
         path: /metadata/name
-        value: poc-test-bucket-notsecure
+        value: poc-test-bucket-secure
       - op: replace
         path: /spec/bucketName
-        value: poc-test-bucket-notsecure
+        value: poc-test-bucket-secure
       - op: add
         path: /spec/compositionRef
         value:
