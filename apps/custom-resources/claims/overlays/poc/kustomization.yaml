@@ -26,10 +26,10 @@ patches:
       - op: add
         path: /spec/encryption
         value: true
-#      - op: replace
-#        path: /spec/tags
-#        value:
-#          - key: Environment
-#            value: poc
-#          - key: Owner
-#            value: fac
+      - op: replace
+        path: /spec/tags
+        value:
+          - key: Environment
+            value: poc
+          - key: Owner
+            value: fac
