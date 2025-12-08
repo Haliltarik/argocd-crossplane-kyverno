@@ -15,7 +15,7 @@ spec:
               apiGroups:
                 - s3.aws.engie.org
       validate:
-        message: "The BucketClaim must have at least one tag defined."
+        message: "❌ The BucketClaim must have at least one tag defined."
         pattern:
           spec:
             tags:
