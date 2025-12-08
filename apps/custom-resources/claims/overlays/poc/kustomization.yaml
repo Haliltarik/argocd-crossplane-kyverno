@@ -22,14 +22,14 @@ patches:
           name: s3bucket-secure
       - op: add
         path: /spec/requireSSL
-        value: true
+        value: false
       - op: add
         path: /spec/encryption
         value: true
-      - op: replace
-        path: /spec/tags
-        value:
-          - key: Environment
-            value: poc
-          - key: Owner
-            value: fac
+#      - op: replace
+#        path: /spec/tags
+#        value:
+#          - key: Environment
+#            value: poc
+#          - key: Owner
+#            value: fac
