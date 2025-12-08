@@ -22,7 +22,7 @@ patches:
           name: s3bucket-secure
       - op: add
         path: /spec/requireSSL
-        value: false
+        value: true
       - op: add
         path: /spec/encryption
         value: true
