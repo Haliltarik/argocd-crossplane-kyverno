@@ -22,10 +22,10 @@ patches:
           name: s3bucket-default
       - op: add
         path: /spec/requireSSL
-        value: false
+        value: true
       - op: add
         path: /spec/encryption
-        value: false
+        value: true
       - op: replace
         path: /spec/tags
         value:
