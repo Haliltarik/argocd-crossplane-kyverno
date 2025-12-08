@@ -19,7 +19,7 @@ patches:
       - op: add
         path: /spec/compositionRef
         value:
-          name: s3bucket-secure
+          name: s3bucket-default
       - op: add
         path: /spec/requireSSL
         value: true
