@@ -16,20 +16,20 @@ patches:
       - op: replace
         path: /spec/bucketName
         value: poc-test-bucket-secure
-      - op: add
-        path: /spec/compositionRef
-        value:
-          name: s3bucket-secure
+#      - op: add
+#        path: /spec/compositionRef
+#        value:
+#          name: s3bucket-secure
       - op: add
         path: /spec/requireSSL
-        value: false
+        value: true
       - op: add
         path: /spec/encryption
         value: true
-#      - op: replace
-#        path: /spec/tags
-#        value:
-#          - key: Environment
-#            value: poc
-#          - key: Owner
-#            value: fac
+      - op: replace
+        path: /spec/tags
+        value:
+          - key: Environment
+            value: poc
+          - key: Owner
+            value: fac
