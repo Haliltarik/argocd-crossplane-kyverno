@@ -1,0 +1,23 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-bucketclaim-tags
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+    - name: check-bucketclaim-tags
+      match:
+        any:
+          - resources:
+              kinds:
+                - BucketClaim
+              apiGroups:
+                - s3.aws.engie.org
+      validate:
+        message: "The BucketClaim must have at least one tag defined."
+        pattern:
+          spec:
+            tags:
+              - key: "*"
+                value: "*"
