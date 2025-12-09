@@ -1,4 +1,4 @@
 resources:
+  - dev
   #- poc
-  #- dev
   - prod
