@@ -5,4 +5,4 @@ resources:
   #- require-s3-tags.yaml
   - require-bucketclaim-tags.yaml
   - require-s3-ssl.yaml
-  #- security-lockdown.yaml
+  - security-lockdown.yaml
