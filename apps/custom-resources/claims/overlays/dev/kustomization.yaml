@@ -20,12 +20,12 @@ patches:
         path: /spec/compositionRef
         value:
           name: s3bucket-secure
-#      - op: add
-#        path: /spec/requireSSL
-#        value: true
-#      - op: add
-#        path: /spec/encryption
-#        value: true
+      - op: add
+        path: /spec/requireSSL
+        value: true
+      - op: add
+        path: /spec/encryption
+        value: true
       - op: replace
         path: /spec/tags
         value:
