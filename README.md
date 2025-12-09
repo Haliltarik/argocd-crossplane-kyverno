@@ -1,4 +1,3 @@
-
 ## Architecture de la Démo: Garantir la conformité des buckets S3 avec Crossplane/Kyverno
 
 ### Vue d'Ensemble
@@ -9,9 +8,12 @@ Cette solution implémente une approche **Shift-Left Security** pour garantir qu
 ```mermaid
 graph TB
     subgraph Développeurs
-        DEV1["👨‍💻 Développeur<br/><br/>✅ BucketClaim Conforme<br/>requireSSL: true<br/>encryption: true"]
-        DEV2["👨‍💻 Développeur<br/><br/>❌ BucketClaim Non-Conforme<br/>requireSSL: false<br/>encryption: false"]
+        DEV1["👨‍💻 Développeur A<br/><br/>✅ BucketClaim Conforme<br/>requireSSL: true<br/>encryption: true<br/>tags: présents"]
+        DEV2["👨‍💻 Développeur B<br/><br/>❌ BucketClaim Non-Conforme<br/>requireSSL: false<br/>encryption: false<br/>tags: absents"]
     end
+    
+    PUSH1["📤 Git Push/Commit<br/>Conforme"]
+    PUSH2["📤 Git Push/Commit<br/>Non-Conforme"]
     
     subgraph GitOps
         GIT["📁 GIT Repository<br/>Source of Truth<br/><br/>• Versionné<br/>• Auditable<br/>• Reviewable"]
@@ -19,36 +21,46 @@ graph TB
     end
     
     subgraph "🛡️ KYVERNO - Policy Engine (3 Niveaux de Protection)"
-        VALIDATION["🔒 NIVEAU 1<br/>Validation BucketClaims<br/><br/>✓ requireSSL = true ?<br/>✓ encryption = true ?<br/>✓ Tags présents ?"]
+        VALIDATION1["🔒 NIVEAU 1<br/>Validation BucketClaims<br/><br/>✓ requireSSL = true ?<br/>✓ encryption = true ?<br/>✓ Tags présents ?"]
+        VALIDATION2["🔒 NIVEAU 1<br/>Validation BucketClaims<br/><br/>✓ requireSSL = true ?<br/>✓ encryption = true ?<br/>✓ Tags présents ?"]
+        
         BLOCAGE["🔒 NIVEAU 2<br/>Blocage Contournements<br/><br/>❌ Bucket AWS direct<br/>❌ Compositions custom<br/>❌ XRDs custom"]
+        
         WHITELIST["🔒 NIVEAU 3<br/>Whitelist Compositions<br/><br/>✓ s3bucket-secure<br/>uniquement"]
     end
     
-    OK["✅ VALIDATION RÉUSSIE"]
-    DENIED["❌ ADMISSION DENIED<br/><br/>Message clair:<br/>'requireSSL et encryption<br/>requis'<br/><br/>Feedback immédiat"]
+    OK["✅ VALIDATION RÉUSSIE<br/><br/>Claim accepté<br/>Création autorisée"]
+    DENIED["❌ ADMISSION DENIED<br/><br/>Message clair:<br/>'requireSSL et encryption<br/>requis'<br/><br/>Feedback immédiat<br/>❌ CRÉATION BLOQUÉE"]
     
     CROSSPLANE["🔧 CROSSPLANE<br/>Infrastructure as Code<br/><br/>Injection automatique:<br/>• Policy TLS 1.2+<br/>• Policy HTTPS<br/>• Policy EncryptionHeader<br/>• Chiffrement AES-256<br/>• Blocage accès public<br/>• Versioning"]
     
     AWS["☁️ AWS S3<br/>Bucket Sécurisé<br/><br/>✅ 4 Policy Statements<br/>✅ Chiffré AES-256<br/>✅ Accès public bloqué<br/>✅ Versioning activé"]
     
-    DEV1 --> GIT
-    DEV2 --> GIT
+    %% Flux Conforme (Développeur A)
+    DEV1 --> PUSH1
+    PUSH1 --> GIT
     GIT --> ARGOCD
-    ARGOCD --> VALIDATION
-    VALIDATION --> BLOCAGE
+    ARGOCD --> VALIDATION1
+    VALIDATION1 --> BLOCAGE
     BLOCAGE --> WHITELIST
-    
     WHITELIST -->|Conforme| OK
-    WHITELIST -->|Non-conforme| DENIED
-    
     OK --> CROSSPLANE
     CROSSPLANE --> AWS
     
-    style DEV1 fill:#90EE90,stroke:#228B22,stroke-width:2px
-    style DEV2 fill:#FFB6C1,stroke:#C92A2A,stroke-width:2px
+    %% Flux Non-Conforme (Développeur B)
+    DEV2 --> PUSH2
+    PUSH2 --> GIT
+    ARGOCD --> VALIDATION2
+    VALIDATION2 -->|Non-conforme| DENIED
+    
+    style DEV1 fill:#90EE90,stroke:#228B22,stroke-width:3px
+    style DEV2 fill:#FFB6C1,stroke:#C92A2A,stroke-width:3px
+    style PUSH1 fill:#90EE90,stroke:#228B22,stroke-width:2px
+    style PUSH2 fill:#FFB6C1,stroke:#C92A2A,stroke-width:2px
     style GIT fill:#F0F0F0,stroke:#666,stroke-width:2px
     style ARGOCD fill:#E8F4F8,stroke:#0066CC,stroke-width:2px
-    style VALIDATION fill:#FFF9E6,stroke:#FFB020,stroke-width:3px
+    style VALIDATION1 fill:#FFF9E6,stroke:#FFB020,stroke-width:3px
+    style VALIDATION2 fill:#FFF9E6,stroke:#FFB020,stroke-width:3px
     style BLOCAGE fill:#FFE6E6,stroke:#CC0000,stroke-width:3px
     style WHITELIST fill:#E6F3FF,stroke:#0066CC,stroke-width:3px
     style OK fill:#90EE90,stroke:#228B22,stroke-width:3px
@@ -56,7 +68,6 @@ graph TB
     style CROSSPLANE fill:#E8F4F8,stroke:#0066CC,stroke-width:2px
     style AWS fill:#FF9900,stroke:#CC7A00,stroke-width:3px
 ```
-
 
 # Tests de Validation
 
